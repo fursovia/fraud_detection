@@ -3,9 +3,52 @@ Here we define architecture, loss, metrics and so on
 """
 
 import tensorflow as tf
+import numpy as np
+import gc
 
 
-def get_architecture(embeddings, name):
+def load_word2vec(filename, vocab_path):
+    print('Starting the word2vec initialization...')
+
+    tokens = []
+    with open(vocab_path, 'r') as file:
+        for line in file:
+            tokens.append(line.replace('\n', ''))
+
+    embeddings_index = dict()
+    with open(filename, 'r') as file:
+        for line in file:
+            values = line.split()
+            token = values[0]
+            if token in tokens:
+                coefs = np.array(values[1:], dtype=np.float64)
+                embeddings_index[token] = coefs
+
+    all_embs = np.stack(list(embeddings_index.values()))
+    emb_mean, emb_std = all_embs.mean(), all_embs.std()
+
+    vocab_size = len(tokens) + 1
+    embedding_size = list(embeddings_index.values())[1].shape[0]
+
+    embedding_matrix = np.random.normal(emb_mean, emb_std, (vocab_size, embedding_size))
+
+    count = 0
+    for i, token in enumerate(tokens):
+        embedding_vector = embeddings_index.get(token)
+        if embedding_vector is not None:
+            embedding_matrix[i] = embedding_vector
+            count += 1
+
+    percent_initialized = 100 * (count + 1) / vocab_size
+    print(f'Percenct initialized: {percent_initialized}')
+
+    del embeddings_index, all_embs
+    gc.collect()
+
+    return embedding_matrix, embedding_size
+
+
+def get_architecture(name, embeddings, meta_features=None):
 
     if name == 'swem_max':
         out = tf.reduce_max(embeddings, axis=1)
@@ -23,6 +66,17 @@ def get_architecture(embeddings, name):
 
         out = tf.layers.dense(out, 2)
 
+    elif name == 'swem_max_features':
+        out = tf.reduce_max(embeddings, axis=1)
+
+        out = tf.layers.dense(out, 128)
+        out = tf.nn.relu(out)
+
+        out = tf.layers.dense(out, 64)
+        out = tf.concat([out, meta_features], axis=-1)
+
+        out = tf.layers.dense(out, 2)
+
     else:
         raise NotImplemented(f'{name} is not implemented')
 
@@ -31,13 +85,24 @@ def get_architecture(embeddings, name):
 
 def build_model(features, params):
 
+    if params['use_pretrained']:
+        loaded_weights, emb_dim = load_word2vec(filename=params['word2vec_filename'],
+                                                vocab_path=params['treatments_vocab_path'])
+        initializer = tf.constant_initializer(loaded_weights)
+    else:
+        initializer = tf.initializers.truncated_normal(stddev=0.001)
+        emb_dim = params['emb_dim']
+
     emb_matrix = tf.get_variable('treatments_embeddings',
-                                 shape=[params['num_treatments'], 256],
+                                 initializer=initializer,
+                                 shape=[params['num_treatments'], emb_dim],
                                  dtype=tf.float64)
 
     embeddings = tf.nn.embedding_lookup(emb_matrix, features['treatments'])
 
-    out = get_architecture(embeddings, params['arch_name'])
+    meta_features = features['meta_features'] if 'meta_features' in features else None
+
+    out = get_architecture(params['arch_name'], embeddings, meta_features)
 
     return out
 

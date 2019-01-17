@@ -10,8 +10,10 @@ from sklearn.model_selection import train_test_split
 import os
 import argparse
 
+from utils import save_vocab_to_txt_file
+
 parser = argparse.ArgumentParser()
-parser.add_argument('-dd', '--data_dir', default='data/only_treatments')
+parser.add_argument('-dd', '--data_dir', default='data/treatments_features')
 parser.add_argument('-s', '--sample', action='store_true')
 
 parser.set_defaults(sample=False)
@@ -38,12 +40,8 @@ def create_vocab(pd_series, min_count=0):
     return vocabulary, vocab_length
 
 
-def save_vocab_to_txt_file(vocab, txt_path):
-    with open(txt_path, "w") as f:
-        f.write("\n".join(token for token in vocab))
-
-
 def get_treatment_seq(df):
+    # TODO: use num treatments to duplicate treatments
     print('df shape =', df.shape)
     unique_ids = df['id'].unique()
     unique_targets = df[['id', 'target']].drop_duplicates()
@@ -72,8 +70,20 @@ def get_treatment_seq(df):
     return sequences
 
 
+def get_meta_features(df):
+    meta_features = ['id', 'amount', 'age', 'sex', 'ins_type', 'speciality']
+
+    features = df.loc[~df['id'].duplicated(), meta_features]
+
+    return features
+
+
 def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+
+
+def _float_feature(value):
+    return tf.train.Feature(float_list=tf.train.FloatList(value=value))
 
 
 def _bytes_feature(value):
@@ -83,12 +93,14 @@ def _bytes_feature(value):
 def get_tfrecords_features(dfrow):
     target = dfrow['target']
     treatments, treatment_type = dfrow['treatments'], dfrow['types']
+    meta_features = dfrow[['amount', 'age', 'sex', 'ins_type', 'speciality']].tolist()
     num_treatments = len(treatments.split())
 
     features = {'label': _int64_feature(target),
                 'treatments': _bytes_feature(tf.compat.as_bytes(treatments)),
                 'treatment_type': _bytes_feature(tf.compat.as_bytes(treatment_type)),
-                'num_treatments': _int64_feature(num_treatments)}
+                'num_treatments': _int64_feature(num_treatments),
+                'meta_features': _float_feature(meta_features)}
 
     return features
 
@@ -120,19 +132,24 @@ if __name__ == '__main__':
 
     sequences = get_treatment_seq(data)
     print('Full data size =', sequences.shape)
+
+    features = get_meta_features(data)
+
+    df = pd.merge(features, sequences, on='id')
+
     # TODO: drop examples with no treatments (based on min treatment frequency)
 
-    train, valid = train_test_split(sequences, stratify=sequences['target'], test_size=0.1, random_state=24)
+    train, valid = train_test_split(df, stratify=df['target'], test_size=0.1, random_state=24)
 
-    sequences.to_csv(os.path.join(args.data_dir, 'full.csv'), index=False)
+    df.to_csv(os.path.join(args.data_dir, 'full.csv'), index=False)
     train.to_csv(os.path.join(args.data_dir, 'train.csv'), index=False)
     valid.to_csv(os.path.join(args.data_dir, 'eval.csv'), index=False)
 
-    convert_to_records(sequences, 'full', args.data_dir)
+    convert_to_records(df, 'full', args.data_dir)
     convert_to_records(train, 'train', args.data_dir)
     convert_to_records(valid, 'eval', args.data_dir)
 
-    treatments_vocabulary, treatments_count = create_vocab(sequences['treatments'], min_count=params['treat_min_freq'])
+    treatments_vocabulary, treatments_count = create_vocab(df['treatments'], min_count=params['treat_min_freq'])
     print(f'Number of unique treatments left = {treatments_count}')
 
     save_vocab_to_txt_file(treatments_vocabulary, os.path.join(args.data_dir, 'treatments.txt'))

@@ -9,21 +9,26 @@ import pandas as pd
 import numpy as np
 from model.model_fn import model_fn
 from model.input_fn import input_fn
+from utils import save_dict_to_json
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('-dd', '--data_dir', default='data/only_treatments')
-parser.add_argument('-md', '--model_dir', default='experiments/only_treatments_aver')
-parser.add_argument('-a', '--architecture', choices=['swem_aver', 'swem_max'])
+parser.add_argument('-dd', '--data_dir', default='data/treatments_features')
+parser.add_argument('-md', '--model_dir', default='experiments/treatments_max_features')
+parser.add_argument('-a', '--architecture', choices=['swem_aver', 'swem_max', 'swem_max_features'])
+parser.add_argument('-pre', '--use_pretrained', action='store_true')
 
-parser.set_defaults(architecture='swem_aver')
+parser.set_defaults(architecture='swem_max_features')
+parser.set_defaults(use_pretrained=False)
 
 
 params = {
     'batch_size': 2048,
     'num_epochs': 10,
     'seq_len': 20,
-    'learning_rate': 0.001
+    'learning_rate': 0.001,
+    'word2vec_filename': 'data/word2vec_treatments_300.txt',
+    'emb_dim': 300
 }
 
 if __name__ == '__main__':
@@ -35,6 +40,9 @@ if __name__ == '__main__':
     params['num_treatments'] = sum(1 for _ in open(params['treatments_vocab_path'], 'r')) + 1
     params['train_size'] = pd.read_csv(os.path.join(args.data_dir, 'train.csv')).shape[0]
     params['arch_name'] = args.architecture
+    params['use_pretrained'] = args.use_pretrained
+
+    save_dict_to_json(params, os.path.join(args.model_dir, 'config.json'))
 
     config = tf.estimator.RunConfig(tf_random_seed=24,
                                     save_checkpoints_steps=(params['train_size'] / params['batch_size']),
@@ -72,11 +80,3 @@ if __name__ == '__main__':
 
     np.save(os.path.join(args.model_dir, 'eval_logits.npy'), eval_logits)
 
-    # estimator.train(lambda: input_fn(os.path.join(args.data_dir, 'train.tfrecords'), params, True))
-    #
-    # eval_results = estimator.evaluate(lambda: input_fn(os.path.join(args.data_dir, 'eval.tfrecords'), params, False))
-    #
-    # metrics_values = {k: v for k, v in eval_results.items()}
-    #
-    # for key in eval_results:
-    #     print("{}: {}".format(key, eval_results[key]))

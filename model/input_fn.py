@@ -12,7 +12,8 @@ def decode(serialized_example):
             'label': tf.FixedLenFeature([], tf.int64),
             'treatments': tf.FixedLenFeature([], tf.string),
             'treatment_type': tf.FixedLenFeature([], tf.string),
-            'num_treatments': tf.FixedLenFeature([], tf.int64)
+            'num_treatments': tf.FixedLenFeature([], tf.int64),
+            'meta_features': tf.FixedLenFeature([5], tf.float32)
         })
 
     label = features.pop('label')
@@ -44,23 +45,26 @@ def input_fn(data_path, params, train_time=True):
     vocab = build_vocab(params['treatments_vocab_path'])
 
     treat_pad_word = vocab.lookup(tf.constant('<PAD>'))
-    fake_padding = tf.constant(9999, dtype=tf.int64)
+    fake_padding1 = tf.constant(9999, dtype=tf.float64)
+    fake_padding2 = tf.constant(9999, dtype=tf.int64)
 
     if train_time:
         dataset = dataset.shuffle(100000)
         dataset = dataset.repeat(params['num_epochs'])
 
     dataset = dataset.map(decode)
-    dataset = dataset.map(lambda feats, labs: (vectorize(feats['treatments'], vocab), labs))
+    dataset = dataset.map(lambda feats, labs: (vectorize(feats['treatments'], vocab),
+                                               tf.cast(feats['meta_features'], dtype=tf.float64),
+                                               labs))
 
-    padded_shapes = (tf.TensorShape([params['seq_len']]), tf.TensorShape([]))
-    padding_values = (treat_pad_word, fake_padding)
+    padded_shapes = (tf.TensorShape([params['seq_len']]), tf.TensorShape([5]), tf.TensorShape([]))
+    padding_values = (treat_pad_word, fake_padding1, fake_padding2)
 
     dataset = dataset.padded_batch(
         batch_size=params['batch_size'], padded_shapes=padded_shapes, padding_values=padding_values
     )
 
-    dataset = dataset.map(lambda treats, y: ({'treatments': treats}, y))
+    dataset = dataset.map(lambda treats, feats,  y: ({'treatments': treats, 'meta_features': feats}, y))
     dataset = dataset.prefetch(buffer_size=None)
 
     return dataset
