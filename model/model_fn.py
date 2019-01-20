@@ -17,6 +17,9 @@ def load_word2vec(filename, vocab_path):
 
     embeddings_index = dict()
     with open(filename, 'r') as file:
+
+        file.readline()  # drop first line
+
         for line in file:
             values = line.split()
             token = values[0]
@@ -48,12 +51,16 @@ def load_word2vec(filename, vocab_path):
     return embedding_matrix, embedding_size
 
 
-def get_architecture(name, embeddings, meta_features=None):
+def get_architecture(params, embeddings, meta_features=None):
+
+    # TODO: put hyperparams to config.yml
+
+    name = params['arch_name']
 
     if name == 'swem_max':
         out = tf.reduce_max(embeddings, axis=1)
 
-        out = tf.layers.dense(out, 128)
+        out = tf.layers.dense(out, params['units'][name])
         out = tf.nn.relu(out)
 
         out = tf.layers.dense(out, 2)
@@ -61,18 +68,26 @@ def get_architecture(name, embeddings, meta_features=None):
     elif name == 'swem_aver':
         out = tf.reduce_mean(embeddings, axis=1)
 
-        out = tf.layers.dense(out, 128)
+        out = tf.layers.dense(out, params['units'][name])
         out = tf.nn.relu(out)
 
         out = tf.layers.dense(out, 2)
 
     elif name == 'swem_max_features':
+
+        # features
+        meta_features = tf.layers.dense(meta_features, 5)
+
+        # treatments
         out = tf.reduce_max(embeddings, axis=1)
 
-        out = tf.layers.dense(out, 128)
+        out = tf.layers.dense(out, params['units'][name][0])
         out = tf.nn.relu(out)
 
-        out = tf.layers.dense(out, 64)
+        out = tf.layers.dense(out, params['units'][name][1])
+        out = tf.nn.relu(out)
+
+        # concat
         out = tf.concat([out, meta_features], axis=-1)
 
         out = tf.layers.dense(out, 2)
@@ -102,7 +117,7 @@ def build_model(features, params):
 
     meta_features = features['meta_features'] if 'meta_features' in features else None
 
-    out = get_architecture(params['arch_name'], embeddings, meta_features)
+    out = get_architecture(params, embeddings, meta_features)
 
     return out
 
@@ -114,7 +129,8 @@ def model_fn(features, labels, mode, params):
         logits = build_model(features, params)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
-        predictions = {'logits': logits}
+        preds = tf.nn.softmax(logits)
+        predictions = {'logits': logits, 'preds': preds}
         return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
     weights = tf.multiply(tf.add(tf.to_float(labels), 1), 0.7)  # 0.7 and 1.4 for 0 and 1

@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 import os
 import argparse
 
-from utils import save_vocab_to_txt_file
+from model.utils import save_vocab_to_txt_file
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-dd', '--data_dir', default='data/treatments_features')

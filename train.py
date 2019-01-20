@@ -9,7 +9,8 @@ import pandas as pd
 import numpy as np
 from model.model_fn import model_fn
 from model.input_fn import input_fn
-from utils import save_dict_to_json
+from model.utils import save_dict_to_yaml, get_yaml_config
+from sklearn.metrics import roc_auc_score, average_precision_score
 
 parser = argparse.ArgumentParser()
 
@@ -22,30 +23,22 @@ parser.set_defaults(architecture='swem_max_features')
 parser.set_defaults(use_pretrained=False)
 
 
-params = {
-    'batch_size': 2048,
-    'num_epochs': 10,
-    'seq_len': 20,
-    'learning_rate': 0.001,
-    'word2vec_filename': 'data/word2vec_treatments_300.txt',
-    'emb_dim': 300
-}
-
 if __name__ == '__main__':
     tf.reset_default_graph()
     tf.logging.set_verbosity(tf.logging.INFO)
     args = parser.parse_args()
 
+    params = get_yaml_config(os.path.join(args.model_dir, 'config.yaml'))
+    params['model_dir'] = args.model_dir
+    params['data_dir'] = args.data_dir
     params['treatments_vocab_path'] = os.path.join(args.data_dir, 'treatments.txt')
     params['num_treatments'] = sum(1 for _ in open(params['treatments_vocab_path'], 'r')) + 1
     params['train_size'] = pd.read_csv(os.path.join(args.data_dir, 'train.csv')).shape[0]
-    params['arch_name'] = args.architecture
-    params['use_pretrained'] = args.use_pretrained
-
-    save_dict_to_json(params, os.path.join(args.model_dir, 'config.json'))
+    params['arch_name'] = args.architecture if 'architecture' not in params else params['architecture']
+    params['use_pretrained'] = args.use_pretrained if 'use_pretrained' not in params else params['use_pretrained']
 
     config = tf.estimator.RunConfig(tf_random_seed=24,
-                                    save_checkpoints_steps=(params['train_size'] / params['batch_size']),
+                                    save_checkpoints_steps=int(params['train_size'] / params['batch_size']),
                                     keep_checkpoint_max=None,
                                     model_dir=args.model_dir)
 
@@ -73,10 +66,28 @@ if __name__ == '__main__':
     eval_preds = estimator.predict(lambda: input_fn(os.path.join(args.data_dir, 'eval.tfrecords'), params, False))
 
     eval_logits = []
+    probs = []
     for p in eval_preds:
         eval_logits.append(p['logits'])
+        probs.append(p['preds'])
 
     eval_logits = np.array(eval_logits, np.float64).reshape(-1, 2)
+    probs = np.array(probs, np.float64).reshape(-1, 2)
 
     np.save(os.path.join(args.model_dir, 'eval_logits.npy'), eval_logits)
+    np.save(os.path.join(args.model_dir, 'eval_probs.npy'), probs)
 
+    # CALCULATE METRICS
+
+    labels = pd.read_csv(os.path.join(args.data_dir, 'eval.csv'))['target'].values
+
+    roc_auc = roc_auc_score(labels, probs[:, 1])
+    aver_pr = average_precision_score(labels, probs[:, 1])
+
+    print('========== ROC AUC =', roc_auc)
+    print('========== Aver PR =', aver_pr)
+
+    params['roc_auc'] = roc_auc
+    params['aver_pr'] = aver_pr
+
+    save_dict_to_yaml(params, os.path.join(args.model_dir, 'config.yaml'))

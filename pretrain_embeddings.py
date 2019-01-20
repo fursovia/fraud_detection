@@ -11,7 +11,7 @@ DATA_PATH = 'data/only_treatments/full.csv'
 
 def train_word2vec(documents: List[str], emb_dim: int, name: str):
 
-    model = Word2Vec(sentences=documents, size=emb_dim, window=10, min_count=2, workers=10)
+    model = Word2Vec(sentences=documents, size=emb_dim, window=4, min_count=2, workers=10)
 
     model.train(documents, total_examples=len(documents), epochs=10)
 
