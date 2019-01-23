@@ -16,7 +16,11 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('-dd', '--data_dir', default='data/treatments_features')
 parser.add_argument('-md', '--model_dir', default='experiments/treatments_max_features')
-parser.add_argument('-a', '--architecture', choices=['swem_aver', 'swem_max', 'swem_max_features'])
+parser.add_argument('-a', '--architecture', choices=['swem_aver',
+                                                     'swem_max',
+                                                     'swem_max_features',
+                                                     'gru',
+                                                     'gru_feats'])
 parser.add_argument('-pre', '--use_pretrained', action='store_true')
 
 parser.set_defaults(architecture='swem_max_features')
@@ -56,7 +60,7 @@ if __name__ == '__main__':
         eval_spec=tf.estimator.EvalSpec(
             input_fn=lambda: input_fn(os.path.join(args.data_dir, 'eval.tfrecords'), params, False),
             steps=None,
-            start_delay_secs=30,
+            start_delay_secs=0,
             throttle_secs=60
         )
     )
@@ -87,7 +91,7 @@ if __name__ == '__main__':
     print('========== ROC AUC =', roc_auc)
     print('========== Aver PR =', aver_pr)
 
-    params['roc_auc'] = roc_auc
-    params['aver_pr'] = aver_pr
+    params['roc_auc'] = str(roc_auc)
+    params['aver_pr'] = str(aver_pr)
 
     save_dict_to_yaml(params, os.path.join(args.model_dir, 'config.yaml'))

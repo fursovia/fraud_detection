@@ -1,5 +1,5 @@
 batch_size: 2048
-num_epochs: 10
+num_epochs: 3
 seq_len: 20
 learning_rate: 0.001
 word2vec_filename: 'data/word2vec_treatments_300.txt'
@@ -8,3 +8,5 @@ units:
   swem_max: 128
   swem_aver: 128
   swem_max_features: [128, 64]
+  gru: [128, 64]
+  gru_feats: [128, 64]

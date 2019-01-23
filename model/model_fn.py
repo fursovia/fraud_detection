@@ -3,8 +3,11 @@ Here we define architecture, loss, metrics and so on
 """
 
 import tensorflow as tf
+from tensorflow.nn.rnn_cell import GRUCell
 import numpy as np
 import gc
+import os
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 
 def load_word2vec(filename, vocab_path):
@@ -75,20 +78,54 @@ def get_architecture(params, embeddings, meta_features=None):
 
     elif name == 'swem_max_features':
 
-        # features
-        meta_features = tf.layers.dense(meta_features, 5)
+        with tf.name_scope('features'):
+            meta_features = tf.layers.dense(meta_features, 5)
 
-        # treatments
-        out = tf.reduce_max(embeddings, axis=1)
+        with tf.name_scope('treatments'):
+            out = tf.reduce_max(embeddings, axis=1)
 
-        out = tf.layers.dense(out, params['units'][name][0])
-        out = tf.nn.relu(out)
+            out = tf.layers.dense(out, params['units'][name][0])
+            out = tf.nn.relu(out)
+
+            out = tf.layers.dense(out, params['units'][name][1])
+            out = tf.nn.relu(out)
+
+        with tf.name_scope('concat'):
+            out = tf.concat([out, meta_features], axis=-1)
+
+        out = tf.layers.dense(out, 2)
+
+    elif name == 'gru':
+        all_states, last_state = tf.nn.dynamic_rnn(
+            cell=GRUCell(params['units'][name][0]),
+            inputs=embeddings,
+            dtype=tf.float64)
+
+        out = tf.reduce_mean(all_states, axis=1)
 
         out = tf.layers.dense(out, params['units'][name][1])
         out = tf.nn.relu(out)
 
-        # concat
-        out = tf.concat([out, meta_features], axis=-1)
+        out = tf.layers.dense(out, 2)
+
+    elif name == 'gru_feats':
+
+        with tf.name_scope('features'):
+            meta_features = tf.layers.dense(meta_features, 5)
+
+        with tf.name_scope('treatments'):
+            all_states, last_state = tf.nn.dynamic_rnn(
+                cell=GRUCell(params['units'][name][0]),
+                inputs=embeddings,
+                dtype=tf.float64)
+
+            out = tf.reduce_mean(all_states, axis=1)
+
+            out = tf.layers.dense(out, params['units'][name][1])
+            out = tf.nn.relu(out)
+
+        with tf.name_scope('concat'):
+            out = tf.concat([out, meta_features], axis=-1)
 
         out = tf.layers.dense(out, 2)
 
@@ -98,20 +135,7 @@ def get_architecture(params, embeddings, meta_features=None):
     return out
 
 
-def build_model(features, params):
-
-    if params['use_pretrained']:
-        loaded_weights, emb_dim = load_word2vec(filename=params['word2vec_filename'],
-                                                vocab_path=params['treatments_vocab_path'])
-        initializer = tf.constant_initializer(loaded_weights)
-    else:
-        initializer = tf.initializers.truncated_normal(stddev=0.001)
-        emb_dim = params['emb_dim']
-
-    emb_matrix = tf.get_variable('treatments_embeddings',
-                                 initializer=initializer,
-                                 shape=[params['num_treatments'], emb_dim],
-                                 dtype=tf.float64)
+def build_model(emb_matrix, features, params):
 
     embeddings = tf.nn.embedding_lookup(emb_matrix, features['treatments'])
 
@@ -125,11 +149,33 @@ def build_model(features, params):
 def model_fn(features, labels, mode, params):
     # is_training = (mode == tf.estimator.ModeKeys.TRAIN)
 
-    with tf.variable_scope('model'):
-        logits = build_model(features, params)
+    with tf.variable_scope('embeddings', reuse=tf.AUTO_REUSE):
+
+        # TODO: fix for word2vec initialization
+        emb_dim = params['emb_dim']
+
+        emb_matrix = tf.get_variable('treatments_embeddings',
+                                     shape=[params['num_treatments'], emb_dim],
+                                     dtype=tf.float64)
+
+    def init_fn(scaffold, sess):
+
+        if params['use_pretrained']:
+            initial_value, _ = load_word2vec(filename=params['word2vec_filename'],
+                                             vocab_path=params['treatments_vocab_path'])
+        else:
+            initial_value = np.random.normal(0, 0.001, (params['num_treatments'], emb_dim)).astype(np.float64)
+
+        sess.run(emb_matrix.initializer, {emb_matrix.initial_value: initial_value})
+
+    scaffold = tf.train.Scaffold(init_fn=init_fn)
+
+    with tf.variable_scope('model', reuse=tf.AUTO_REUSE):
+        logits = build_model(emb_matrix, features, params)
+
+    preds = tf.nn.softmax(logits)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
-        preds = tf.nn.softmax(logits)
         predictions = {'logits': logits, 'preds': preds}
         return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
@@ -139,6 +185,16 @@ def model_fn(features, labels, mode, params):
     loss = tf.losses.softmax_cross_entropy(onehot_labels=onehot_labels, logits=logits, weights=weights)
 
     accuracy = tf.reduce_mean(tf.to_float(tf.equal(tf.argmax(logits, axis=1), labels)))
+
+    if mode == tf.estimator.ModeKeys.EVAL:
+        with tf.variable_scope('metrics'):
+
+            roc_auc = tf.metrics.auc(labels=onehot_labels, predictions=preds)
+
+            eval_metric_ops = {'accuracy': tf.metrics.mean(accuracy),
+                               'roc_auc': roc_auc}
+
+        return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
     tf.summary.scalar('loss', loss)
     tf.summary.scalar('accuracy', accuracy)
@@ -154,4 +210,4 @@ def model_fn(features, labels, mode, params):
         optimizer=optimizer_fn,
         name='optimizer')
 
-    return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
+    return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op, scaffold=scaffold)
