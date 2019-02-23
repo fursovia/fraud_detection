@@ -1,4 +1,6 @@
 
+You will need TensorFlow `1.12.0` to run experiments
+
 
 ## Data preparation
 
