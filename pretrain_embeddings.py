@@ -5,8 +5,12 @@ Pretrains embeddings for treatments
 from gensim.models import Word2Vec
 import pandas as pd
 from typing import List
+import argparse
 
 DATA_PATH = 'data/only_treatments/full.csv'
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--data_path', default='data/only_treatments/full.csv')
 
 
 def train_word2vec(documents: List[str], emb_dim: int, name: str):
@@ -19,8 +23,8 @@ def train_word2vec(documents: List[str], emb_dim: int, name: str):
 
 
 if __name__ == '__main__':
-
-    data = pd.read_csv(DATA_PATH)
+    args = parser.parse_args()
+    data = pd.read_csv(args.data_path)
 
     treatments = data['treatments'].tolist()
     treatment_types = data['types'].tolist()

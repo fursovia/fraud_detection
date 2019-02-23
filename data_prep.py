@@ -13,13 +13,31 @@ import argparse
 from model.utils import save_vocab_to_txt_file
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-dd', '--data_dir', default='data/treatments_features')
+parser.add_argument('-dd', '--data_dir', default='data')
 parser.add_argument('-s', '--sample', action='store_true')
+parser.add_argument('-tmf', '--treat_min_freq', type=int, default=5)
 
 parser.set_defaults(sample=False)
 
-params = {
-    'treat_min_freq': 5
+META_FEATURES = ['amount', 'age', 'sex', 'ins_type', 'speciality']
+
+
+cols_mapping = {
+    'ID': 'id',
+    'KORREKTUR': 'adj',
+    'RECHNUNGSBETRAG': 'amount',
+    'ALTER': 'age',
+    'GESCHLECHT': 'sex',
+    'VERSICHERUNG': 'ins_type',
+    'FACHRICHTUNG': 'speciality',  # why only 0/1 ?
+    'NUMMER': 'treatment',
+    'NUMMER_KAT': 'treatment_type',
+    'TYP': 'billing_type',
+    'ANZAHL': 'num_treatments',
+    'FAKTOR': 'factor',
+    'BETRAG': 'cost',
+    'ART': 'cost_type',
+    'LEISTUNG': 'ben_type'
 }
 
 
@@ -71,7 +89,8 @@ def get_treatment_seq(df):
 
 
 def get_meta_features(df):
-    meta_features = ['id', 'amount', 'age', 'sex', 'ins_type', 'speciality']
+
+    meta_features = META_FEATURES + ['id']
 
     features = df.loc[~df['id'].duplicated(), meta_features]
 
@@ -93,7 +112,7 @@ def _bytes_feature(value):
 def get_tfrecords_features(dfrow):
     target = dfrow['target']
     treatments, treatment_type = dfrow['treatments'], dfrow['types']
-    meta_features = dfrow[['amount', 'age', 'sex', 'ins_type', 'speciality']].tolist()
+    meta_features = dfrow[META_FEATURES].tolist()
     num_treatments = len(treatments.split())
 
     features = {'label': _int64_feature(target),
@@ -122,13 +141,38 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    data1 = pd.read_csv(os.path.join(args.data_dir, 'arzta_daten_anonym1.csv'), sep=';')
+    data2 = pd.read_csv(os.path.join(args.data_dir, 'arzta_daten_anonym2.csv'), sep=';')
+    data3 = pd.read_csv(os.path.join(args.data_dir, 'arzta_daten_anonym3.csv'), sep=';')
+    data4 = pd.read_csv(os.path.join(args.data_dir, 'arzta_daten_anonym4.csv'), sep=';')
+
+    data = pd.concat([data1, data2, data3, data4])
+
+    columns_comma = ['RECHNUNGSBETRAG', 'FAKTOR', 'BETRAG', 'ALTER', 'KORREKTUR']
+
+    data[columns_comma] = data[columns_comma].apply(lambda x: x.str.replace(',', '.'))
+
+    for column in columns_comma:
+        data[column] = pd.to_numeric(data[column], downcast='float')
+
+    data = data.rename(columns=cols_mapping)
+
+    data['target'] = data['adj'].astype(bool).astype(int)
+    data = data.drop(columns=['adj'])
+
+    data['treatment'] = data['treatment'].fillna(value='<UNK>')
+    data['treatment_type'] = data['treatment_type'].fillna(value='<UNK>')
+
     if args.sample:
         nrows = 10000
     else:
         nrows = None
 
+    data.to_csv(os.path.join(args.data_dir, 'data.csv'), index=False)
+    data = data[:nrows]
+
     # initial data is always at subfolder
-    data = pd.read_csv(os.path.join(args.data_dir.split(sep='/')[0], 'data.csv'), nrows=nrows)
+    # data = pd.read_csv(os.path.join(args.data_dir.split(sep='/')[0], 'data.csv'), nrows=nrows)
 
     sequences = get_treatment_seq(data)
     print('Full data size =', sequences.shape)
@@ -149,7 +193,7 @@ if __name__ == '__main__':
     convert_to_records(train, 'train', args.data_dir)
     convert_to_records(valid, 'eval', args.data_dir)
 
-    treatments_vocabulary, treatments_count = create_vocab(df['treatments'], min_count=params['treat_min_freq'])
+    treatments_vocabulary, treatments_count = create_vocab(df['treatments'], min_count=args.treat_min_freq)
     print(f'Number of unique treatments left = {treatments_count}')
 
     save_vocab_to_txt_file(treatments_vocabulary, os.path.join(args.data_dir, 'treatments.txt'))

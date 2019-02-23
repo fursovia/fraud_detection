@@ -10,7 +10,7 @@ import numpy as np
 from model.model_fn import model_fn
 from model.input_fn import input_fn
 from model.utils import save_dict_to_yaml, get_yaml_config
-from sklearn.metrics import roc_auc_score, average_precision_score
+from sklearn.metrics import roc_auc_score, average_precision_score, confusion_matrix
 
 parser = argparse.ArgumentParser()
 
@@ -77,6 +77,7 @@ if __name__ == '__main__':
 
     eval_logits = np.array(eval_logits, np.float64).reshape(-1, 2)
     probs = np.array(probs, np.float64).reshape(-1, 2)
+    y_pred = (probs[:, 1] > 0.3).astype(int)
 
     np.save(os.path.join(args.model_dir, 'eval_logits.npy'), eval_logits)
     np.save(os.path.join(args.model_dir, 'eval_probs.npy'), probs)
@@ -87,11 +88,18 @@ if __name__ == '__main__':
 
     roc_auc = roc_auc_score(labels, probs[:, 1])
     aver_pr = average_precision_score(labels, probs[:, 1])
+    tn, fp, fn, tp = confusion_matrix(y_true=labels, y_pred=y_pred).ravel()
 
+    print('========== FP/TP')
     print('========== ROC AUC =', roc_auc)
     print('========== Aver PR =', aver_pr)
+    print('========== TN, FP, FN, TP =', tn, fp, fn, tp)
 
     params['roc_auc'] = str(roc_auc)
     params['aver_pr'] = str(aver_pr)
+    params['TP'] = str(tn)
+    params['FP'] = str(fp)
+    params['FN'] = str(fn)
+    params['TP'] = str(tp)
 
     save_dict_to_yaml(params, os.path.join(args.model_dir, 'config.yaml'))
