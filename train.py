@@ -25,6 +25,7 @@ parser.add_argument('-pre', '--use_pretrained', action='store_true')
 parser.add_argument('--seq_len', type=int, default=None)
 parser.add_argument('--num_epochs', type=int, default=None)
 parser.add_argument('--batch_size', type=int, default=None)
+parser.add_argument('--learning_rate', type=float, default=None)
 
 parser.set_defaults(architecture='swem_max_features')
 parser.set_defaults(use_pretrained=False)
@@ -53,6 +54,7 @@ if __name__ == '__main__':
     params['seq_len'] = args.seq_len if args.seq_len is not None else params['seq_len']
     params['num_epochs'] = args.num_epochs if args.num_epochs is not None else params['num_epochs']
     params['batch_size'] = args.batch_size if args.batch_size is not None else params['batch_size']
+    params['learning_rate'] = args.learning_rate if args.learning_rate is not None else params['learning_rate']
 
     config = tf.estimator.RunConfig(tf_random_seed=24,
                                     save_checkpoints_steps=int(params['train_size'] / params['batch_size']),
