@@ -1,0 +1,10 @@
+.ipynb_checkpoints
+experiments/
+*.ipynb
+.idea/
+.DS_Store
+__pycache__/
+model/__pycache__/
+rasul/
+data
+archive
