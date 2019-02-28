@@ -2,23 +2,11 @@
 Here we define inputs to the model
 """
 
+import sys
+sys.path.append('..')
 import tensorflow as tf
-
-
-def decode(serialized_example):
-    features = tf.parse_single_example(
-        serialized_example,
-        features={
-            'label': tf.FixedLenFeature([], tf.int64),
-            'treatments': tf.FixedLenFeature([], tf.string),
-            'treatment_type': tf.FixedLenFeature([], tf.string),
-            'num_treatments': tf.FixedLenFeature([], tf.int64),
-            'meta_features': tf.FixedLenFeature([5], tf.float32)
-        })
-
-    label = features.pop('label')
-
-    return features, label
+import pandas as pd
+from data_prep import META_FEATURES
 
 
 def build_vocab(file_name):
@@ -33,15 +21,25 @@ def build_vocab(file_name):
     return tokens
 
 
-def vectorize(string, vocab):
+def vectorize(string, vocab, seq_len):
     splitted = tf.string_split([string]).values
     vectorized = vocab.lookup(splitted)
-    vectorized = vectorized[:20]
+    vectorized = vectorized[:seq_len]
     return vectorized
 
 
 def input_fn(data_path, params, train_time=True):
-    dataset = tf.data.TFRecordDataset(data_path)
+    data = pd.read_csv(data_path)
+    num_features = len(META_FEATURES)
+
+    dataset = tf.data.Dataset.from_tensor_slices((
+        {
+            'treatments': data['treatments'].values,
+            'meta_features': data[META_FEATURES].values,
+        },
+        data['target'].values
+    ))
+
     vocab = build_vocab(params['treatments_vocab_path'])
 
     treat_pad_word = vocab.lookup(tf.constant('<PAD>'))
@@ -49,15 +47,15 @@ def input_fn(data_path, params, train_time=True):
     fake_padding2 = tf.constant(9999, dtype=tf.int64)
 
     if train_time:
-        dataset = dataset.shuffle(100000)
+        dataset = dataset.shuffle(params['train_size'])
         dataset = dataset.repeat(params['num_epochs'])
 
-    dataset = dataset.map(decode)
-    dataset = dataset.map(lambda feats, labs: (vectorize(feats['treatments'], vocab),
+    dataset = dataset.map(lambda feats, labs: (vectorize(feats['treatments'], vocab, params['seq_len']),
                                                tf.cast(feats['meta_features'], dtype=tf.float64),
                                                labs))
 
-    padded_shapes = (tf.TensorShape([params['seq_len']]), tf.TensorShape([5]), tf.TensorShape([]))
+    # 5 is the number of features
+    padded_shapes = (tf.TensorShape([params['seq_len']]), tf.TensorShape([num_features]), tf.TensorShape([]))
     padding_values = (treat_pad_word, fake_padding1, fake_padding2)
 
     dataset = dataset.padded_batch(

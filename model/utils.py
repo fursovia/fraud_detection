@@ -4,6 +4,7 @@ utility functions
 
 import json
 import yaml
+from sklearn.metrics import roc_auc_score, average_precision_score, confusion_matrix, f1_score
 
 
 def get_yaml_config(config_path):
@@ -27,3 +28,17 @@ def save_dict_to_json(d, json_path):
 def save_vocab_to_txt_file(vocab, txt_path):
     with open(txt_path, "w") as f:
         f.write("\n".join(token for token in vocab))
+
+
+def calculate_metrics(probs, labels, thres=0.3):
+
+    y_pred = (probs[:, 1] > thres).astype(int)
+
+    metrics = dict()
+
+    metrics['roc_auc'] = roc_auc_score(labels, probs[:, 1])
+    metrics['aver_pr'] = average_precision_score(labels, probs[:, 1])
+    metrics['f1'] = f1_score(y_true=labels, y_pred=y_pred)
+    # tn, fp, fn, tp = confusion_matrix(y_true=labels, y_pred=y_pred).ravel()
+
+    return metrics

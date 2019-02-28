@@ -56,8 +56,6 @@ def load_word2vec(filename, vocab_path):
 
 def get_architecture(params, embeddings, meta_features=None):
 
-    # TODO: put hyperparams to config.yml
-
     name = params['arch_name']
 
     if name == 'swem_max':
@@ -66,15 +64,11 @@ def get_architecture(params, embeddings, meta_features=None):
         out = tf.layers.dense(out, params['units'][name])
         out = tf.nn.relu(out)
 
-        out = tf.layers.dense(out, 2)
-
     elif name == 'swem_aver':
         out = tf.reduce_mean(embeddings, axis=1)
 
         out = tf.layers.dense(out, params['units'][name])
         out = tf.nn.relu(out)
-
-        out = tf.layers.dense(out, 2)
 
     elif name == 'swem_max_features':
 
@@ -93,20 +87,17 @@ def get_architecture(params, embeddings, meta_features=None):
         with tf.name_scope('concat'):
             out = tf.concat([out, meta_features], axis=-1)
 
-        out = tf.layers.dense(out, 2)
-
     elif name == 'gru':
         all_states, last_state = tf.nn.dynamic_rnn(
             cell=GRUCell(params['units'][name][0]),
             inputs=embeddings,
-            dtype=tf.float64)
+            dtype=tf.float64
+        )
 
         out = tf.reduce_mean(all_states, axis=1)
 
         out = tf.layers.dense(out, params['units'][name][1])
         out = tf.nn.relu(out)
-
-        out = tf.layers.dense(out, 2)
 
     elif name == 'gru_feats':
 
@@ -127,10 +118,10 @@ def get_architecture(params, embeddings, meta_features=None):
         with tf.name_scope('concat'):
             out = tf.concat([out, meta_features], axis=-1)
 
-        out = tf.layers.dense(out, 2)
-
     else:
         raise NotImplemented(f'{name} is not implemented')
+
+    out = tf.layers.dense(out, 2)
 
     return out
 

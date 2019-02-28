@@ -7,8 +7,7 @@ from xgboost import XGBClassifier
 import argparse
 import pandas as pd
 import numpy as np
-from model.utils import save_dict_to_yaml, get_yaml_config
-from sklearn.metrics import roc_auc_score, average_precision_score, confusion_matrix
+from model.utils import save_dict_to_yaml, get_yaml_config, calculate_metrics
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from data_prep import META_FEATURES
 from scipy import sparse
@@ -29,12 +28,14 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    if not os.path.exists(args.model_dir):
+        os.makedirs(args.model_dir)
+
     train = pd.read_csv(os.path.join(args.data_dir, 'train.csv'))
     val = pd.read_csv(os.path.join(args.data_dir, 'eval.csv'))
 
     with open(os.path.join(args.data_dir, 'treatments.txt'), 'r') as f:
-        vocab = {}
-
+        vocab = dict()
         c = 0
         for line in f:
             vocab[line.rstrip('\n')] = c
@@ -76,19 +77,16 @@ if __name__ == '__main__':
     xgb.fit(x_train, y_train)
 
     probs = xgb.predict_proba(x_eval)
-
     np.save(os.path.join(args.model_dir, 'eval_probs.npy'), probs)
 
-    roc_auc = roc_auc_score(y_eval, probs[:, 1])
-    aver_pr = average_precision_score(y_eval, probs[:, 1])
-
-    print('========== ROC AUC =', roc_auc)
-    print('========== Aver PR =', aver_pr)
-
     params = dict()
-
     params['vect'] = str(args.vect)
-    params['roc_auc'] = str(roc_auc)
-    params['aver_pr'] = str(aver_pr)
+    params['features'] = 'yes' if args.features else 'no'
+
+    # METRICS
+    metrics = calculate_metrics(probs, y_eval, thres=0.3)
+    for key, val in metrics.items():
+        params[key] = str(val)
+        print(f'{key} = {val}')
 
     save_dict_to_yaml(params, os.path.join(args.model_dir, 'results.yaml'))
