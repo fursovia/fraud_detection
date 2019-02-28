@@ -7,17 +7,17 @@ import pandas as pd
 from typing import List
 import argparse
 
-DATA_PATH = 'data/only_treatments/full.csv'
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_path', default='data/only_treatments/full.csv')
+parser.add_argument('--data_path', default='data/test/full.csv')
+parser.add_argument('--window', type=int, default=40)
 
 
-def train_word2vec(documents: List[str], emb_dim: int, name: str):
+def train_word2vec(documents: List[str], emb_dim: int, name: str, window_size=40):
 
-    model = Word2Vec(sentences=documents, size=emb_dim, window=4, min_count=2, workers=10)
+    model = Word2Vec(sentences=documents, size=emb_dim, window=window_size, min_count=2, workers=10, negative=10)
 
-    model.train(documents, total_examples=len(documents), epochs=10)
+    model.train(documents, total_examples=len(documents), epochs=30)
 
     model.wv.save_word2vec_format(f'data/word2vec_{name}_{emb_dim}.txt', binary=False)
 
@@ -35,10 +35,10 @@ if __name__ == '__main__':
     documents = [doc.split() for doc in treatments]
 
     for size in sizes:
-        train_word2vec(documents=documents, emb_dim=size, name='treatments')
+        train_word2vec(documents=documents, emb_dim=size, name='treatments', window_size=args.window)
 
-    # TREATMENT TYPES
-    documents = [doc.split() for doc in treatment_types]
-
-    for size in sizes:
-        train_word2vec(documents=documents, emb_dim=size, name='types')
+    # # TREATMENT TYPES
+    # documents = [doc.split() for doc in treatment_types]
+    #
+    # for size in sizes:
+    #     train_word2vec(documents=documents, emb_dim=size, name='types', window_size=args.window)
