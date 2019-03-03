@@ -1,8 +1,9 @@
 batch_size: 2048
 num_epochs: 3
 seq_len: 40
-learning_rate: 0.0003
+learning_rate: 0.001
 word2vec_filename: 'data/word2vec_treatments_300.txt'
+use_pretrained: false
 emb_dim: 300
 units:
   swem_max: 128

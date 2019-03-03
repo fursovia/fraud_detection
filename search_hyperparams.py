@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import numpy as np
 from subprocess import check_call
 import sys
 from model.utils import get_yaml_config, save_dict_to_yaml
@@ -32,23 +33,17 @@ if __name__ == "__main__":
 
     params = get_yaml_config(os.path.join(args.parent_dir, 'config.yaml'))
 
-    emb_dims = [50, 100, 300]
-    use_pretrained_options = [True]  # False
+    # emb_dims = [50, 100, 300]
+    # use_pretrained_options = [True, False]
+    # units = [[32, 16], [64, 32], [128, 64]]
 
-    units = [[32, 16], [64, 32], [128, 64]]
+    seq_lens = np.arange(5, 101, 5)
 
-    for pretr in use_pretrained_options:
-        for i, emb_dim in enumerate(emb_dims):
+    for seq_len in seq_lens:
+        print(f'Running training process for seq_len = {seq_len}')
 
-            print('*' * 200)
-            print('Running training process')
+        params['use_pretrained'] = True
+        params['seq_len'] = int(seq_len)
 
-            params['units']['swem_max_features'] = units[i]
-
-            pretr_option = 'pretr' if pretr else 'not_pretr'
-            params['use_pretrained'] = pretr
-            params['emb_dim'] = emb_dim
-            params['word2vec_filename'] = f'data/word2vec_treatments_{emb_dim}.txt'
-
-            job_name = f'emb_dims_{emb_dim}_{pretr_option}'
-            launch_training_job(args.parent_dir, args.data_dir, job_name, params)
+        job_name = f'swem_max_seq_len={seq_len}'
+        launch_training_job(args.parent_dir, args.data_dir, job_name, params)
