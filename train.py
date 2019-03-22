@@ -26,6 +26,7 @@ parser.add_argument('--seq_len', type=int, default=None)
 parser.add_argument('--num_epochs', type=int, default=None)
 parser.add_argument('--batch_size', type=int, default=None)
 parser.add_argument('--learning_rate', type=float, default=None)
+parser.add_argument('--vocab_frac', type=float, default=None)
 
 parser.set_defaults(architecture='swem_max_features')
 parser.set_defaults(use_pretrained=False)
@@ -46,7 +47,8 @@ if __name__ == '__main__':
     params['model_dir'] = args.model_dir
     params['data_dir'] = args.data_dir
     params['treatments_vocab_path'] = os.path.join(args.data_dir, 'treatments.txt')
-    params['num_treatments'] = sum(1 for _ in open(params['treatments_vocab_path'], 'r')) + 1
+    vocab_fraq = args.vocab_frac if args.vocab_frac is not None else params['vocab_frac']
+    params['num_treatments'] = int(sum(1 for _ in open(params['treatments_vocab_path'], 'r')) * vocab_fraq) + 1
     params['train_size'] = pd.read_csv(os.path.join(args.data_dir, 'train.csv')).shape[0]
 
     params['arch_name'] = args.architecture if 'architecture' not in params else params['architecture']

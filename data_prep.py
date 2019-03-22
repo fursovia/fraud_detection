@@ -12,7 +12,7 @@ from model.utils import save_vocab_to_txt_file
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-dd', '--data_dir', default='data')
-parser.add_argument('-tmf', '--treat_min_freq', type=int, default=5)
+parser.add_argument('-tmf', '--treat_min_freq', type=int, default=1)
 parser.add_argument('--random_split', action='store_true')
 parser.add_argument('-s', '--sample', action='store_true')
 

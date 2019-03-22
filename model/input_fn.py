@@ -9,10 +9,11 @@ import pandas as pd
 from data_prep import META_FEATURES
 
 
-def build_vocab(file_name):
+def build_vocab(file_name, vocab_size=None):
     # there is a difference between <UNK> and not in vocab
     tokens = tf.contrib.lookup.index_table_from_file(
         file_name,
+        vocab_size=vocab_size,
         num_oov_buckets=1,
         delimiter='\n',
         name='vocab'
@@ -40,7 +41,7 @@ def input_fn(data_path, params, train_time=True):
         data['target'].values
     ))
 
-    vocab = build_vocab(params['treatments_vocab_path'])
+    vocab = build_vocab(params['treatments_vocab_path'], params['num_treatments'] - 1)
 
     treat_pad_word = vocab.lookup(tf.constant('<PAD>'))
     fake_padding1 = tf.constant(9999, dtype=tf.float64)

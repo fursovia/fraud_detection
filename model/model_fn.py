@@ -121,14 +121,15 @@ def get_architecture(params, embeddings, meta_features=None):
     else:
         raise NotImplemented(f'{name} is not implemented')
 
-    out = tf.layers.dense(out, 2)
+    with tf.name_scope('output_logits'):
+        out = tf.layers.dense(out, 2, name='output_logits')
 
     return out
 
 
 def build_model(emb_matrix, features, params):
 
-    embeddings = tf.nn.embedding_lookup(emb_matrix, features['treatments'])
+    embeddings = tf.nn.embedding_lookup(emb_matrix, features['treatments'], name='emb_matrix_lookup')
 
     meta_features = features['meta_features'] if 'meta_features' in features else None
 
@@ -170,7 +171,8 @@ def model_fn(features, labels, mode, params):
         predictions = {'logits': logits, 'preds': preds}
         return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
-    weights = tf.multiply(tf.add(tf.to_float(labels), 1), 0.7)  # 0.7 and 1.4 for 0 and 1
+    # weights = tf.multiply(tf.add(tf.to_float(labels), 1), 0.7)  # 0.7 and 1.4 for 0 and 1
+    weights = 1.0  # all examples are equal
 
     onehot_labels = tf.one_hot(labels, depth=2)
     loss = tf.losses.softmax_cross_entropy(onehot_labels=onehot_labels, logits=logits, weights=weights)

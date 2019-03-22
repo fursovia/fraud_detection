@@ -36,14 +36,16 @@ if __name__ == "__main__":
     # emb_dims = [50, 100, 300]
     # use_pretrained_options = [True, False]
     # units = [[32, 16], [64, 32], [128, 64]]
+    # seq_lens = np.arange(5, 101, 5)
 
-    seq_lens = np.arange(5, 101, 5)
+    # vocab_fracs = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
-    for seq_len in seq_lens:
-        print(f'Running training process for seq_len = {seq_len}')
+    sizes = [(2 ** (i + 1), 2 ** i) for i in range(1, 10)]
 
-        params['use_pretrained'] = True
-        params['seq_len'] = int(seq_len)
+    for emb_dim, unit_size in sizes:
 
-        job_name = f'swem_max_seq_len={seq_len}'
+        params['emb_dim'] = emb_dim
+        params['units']['swem_max'] = unit_size
+
+        job_name = f'swem_max_emb_size={emb_dim},unit_size={unit_size}'
         launch_training_job(args.parent_dir, args.data_dir, job_name, params)

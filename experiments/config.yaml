@@ -1,4 +1,5 @@
 batch_size: 2048
+vocab_frac: 1.0
 num_epochs: 3
 seq_len: 40
 learning_rate: 0.001
