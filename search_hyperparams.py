@@ -37,15 +37,13 @@ if __name__ == "__main__":
     # use_pretrained_options = [True, False]
     # units = [[32, 16], [64, 32], [128, 64]]
     # seq_lens = np.arange(5, 101, 5)
-
     # vocab_fracs = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    # sizes = [(2 ** (i + 1), 2 ** i) for i in range(1, 10)]
+    emb_dims = [30, 61, 72, 75, 90, 150, 300]
 
-    sizes = [(2 ** (i + 1), 2 ** i) for i in range(1, 10)]
-
-    for emb_dim, unit_size in sizes:
+    for emb_dim in emb_dims:
 
         params['emb_dim'] = emb_dim
-        params['units']['swem_max'] = unit_size
 
-        job_name = f'swem_max_emb_size={emb_dim},unit_size={unit_size}'
+        job_name = f'swem_max_emb_size={emb_dim}'
         launch_training_job(args.parent_dir, args.data_dir, job_name, params)

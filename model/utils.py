@@ -4,6 +4,7 @@ utility functions
 
 import json
 import yaml
+import numpy as np
 from sklearn.metrics import roc_auc_score, average_precision_score, confusion_matrix, f1_score
 
 
@@ -32,13 +33,15 @@ def save_vocab_to_txt_file(vocab, txt_path):
 
 def calculate_metrics(probs, labels, thres=0.3):
 
-    y_pred = (probs[:, 1] > thres).astype(int)
+    # y_pred = (probs[:, 1] > thres).astype(int)
 
     metrics = dict()
-
     metrics['roc_auc'] = roc_auc_score(labels, probs[:, 1])
     metrics['aver_pr'] = average_precision_score(labels, probs[:, 1])
-    metrics['f1'] = f1_score(y_true=labels, y_pred=y_pred)
+    metrics['f1'] = max(
+        [f1_score(y_true=labels, y_pred=(probs[:, 1] > threshold).astype(int))
+            for threshold in np.linspace(0.001, 0.99)]
+    )
     # tn, fp, fn, tp = confusion_matrix(y_true=labels, y_pred=y_pred).ravel()
 
     return metrics
