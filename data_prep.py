@@ -96,6 +96,11 @@ def get_meta_features(df):
     return features
 
 
+def save_string(text, path):
+    with open(path, 'w') as file:
+        file.write(text)
+
+
 if __name__ == '__main__':
 
     args = parser.parse_args()
@@ -145,6 +150,9 @@ if __name__ == '__main__':
     else:
         train = df[:int(0.7 * len(df))]
         valid = df[int(0.7 * len(df)):]
+
+    all_treatments = ' '.join(df['treatments'].tolist()).strip()
+    save_string(all_treatments, os.path.join(args.data_dir, 'all_treatments.txt'))
 
     df.to_csv(os.path.join(args.data_dir, 'full.csv'), index=False)
     train.to_csv(os.path.join(args.data_dir, 'train.csv'), index=False)

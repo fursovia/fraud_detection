@@ -1,0 +1,3 @@
+skip_window: 20
+vocabulary_size: 2205
+min_count: 1

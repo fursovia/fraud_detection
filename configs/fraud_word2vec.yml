@@ -1,0 +1,4 @@
+skip_window: 20
+neg_samples: 5
+vocabulary_size: 2205
+min_count: 1
