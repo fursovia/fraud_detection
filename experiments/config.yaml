@@ -7,8 +7,9 @@ word2vec_filename: 'data/word2vec_treatments_300.txt'
 trainable_emb: true
 in_memory_embeddings: false
 use_pretrained: false
+features: false
 emb_dim: 300
 num_units: 128
 aggregation: 'mean'
-encoder: 'GRU'
+encoder: 'no_encoder'
 encoder_units: 128

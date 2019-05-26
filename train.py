@@ -17,7 +17,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-dd', '--data_dir', default='data')
 parser.add_argument('-md', '--model_dir', default='experiments')
 parser.add_argument('-a', '--aggregation', choices=['mean', 'max', 'concat'])
+parser.add_argument('-e', '--encoder', choices=['GRU', 'biGRU', 'LSTM', 'biLSTM'])
 
+parser.add_argument('-f', '--features', action='store_true', help='Add feature tower?')
 parser.add_argument('-pre', '--use_pretrained', action='store_true')
 parser.add_argument('-ime', '--in_memory_embeddings', action='store_true')  # TODO: not working
 parser.add_argument('--seq_len', type=int, default=None)
@@ -26,6 +28,8 @@ parser.add_argument('--batch_size', type=int, default=None)
 parser.add_argument('--learning_rate', type=float, default=None)
 parser.add_argument('--vocab_frac', type=float, default=None)
 
+parser.set_defaults(encoder=None)
+parser.set_defaults(features=None)
 parser.set_defaults(aggregation=None)
 parser.set_defaults(use_pretrained=None)
 parser.set_defaults(in_memory_embeddings=None)

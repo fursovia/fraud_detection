@@ -83,7 +83,7 @@ def build_model(emb_matrix, features, params):
 
     embeddings = tf.nn.embedding_lookup(emb_matrix, features['treatments'], name='emb_matrix_lookup')
 
-    encoder = params['encoder']  # None, GRU, LSTM
+    encoder = params['encoder']  # GRU, LSTM, biGRU, biLSTM
 
     if encoder == 'GRU':
         embeddings, _ = tf.nn.dynamic_rnn(
@@ -97,10 +97,26 @@ def build_model(emb_matrix, features, params):
             inputs=embeddings,
             dtype=tf.float64
         )
+    elif encoder == 'biGRU':
+        embeddings, _ = tf.nn.bidirectional_dynamic_rnn(
+            cell_fw=tf.nn.rnn_cell.GRUCell(params['encoder_units']),
+            cell_bw=tf.nn.rnn_cell.GRUCell(params['encoder_units']),
+            inputs=embeddings,
+            dtype=tf.float64
+        )
+        embeddings = tf.reduce_mean(embeddings, axis=0)
+    elif encoder == 'biLSTM':
+        embeddings, _ = tf.nn.bidirectional_dynamic_rnn(
+            cell_fw=tf.nn.rnn_cell.LSTMCell(params['encoder_units']),
+            cell_bw=tf.nn.rnn_cell.LSTMCell(params['encoder_units']),
+            inputs=embeddings,
+            dtype=tf.float64
+        )
+        embeddings = tf.reduce_mean(embeddings, axis=0)
     else:
         print(f'{encoder} -- no such encoder, skipping ...')
 
-    meta_features = features['meta_features'] if 'meta_features' in features else None
+    meta_features = features['meta_features'] if params['features'] else None
 
     out = get_architecture(params, embeddings, meta_features)
 
@@ -126,6 +142,7 @@ def model_fn(features, labels, mode, params):
             initial_value, _ = load_word2vec(filename=params['word2vec_filename'],
                                              vocab_path=params['treatments_vocab_path'])
         else:
+            np.random.seed(43)
             initial_value = np.random.normal(0, 0.001, (params['num_treatments'], emb_dim)).astype(np.float64)
 
         sess.run(emb_matrix.initializer, {emb_matrix.initial_value: initial_value})
