@@ -11,3 +11,4 @@ emb_dim: 300
 num_units: 128
 aggregation: 'mean'
 encoder: 'GRU'
+encoder_units: 128

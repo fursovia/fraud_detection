@@ -3,7 +3,6 @@ Here we define architecture, loss, metrics and so on
 """
 
 import tensorflow as tf
-from tensorflow.nn.rnn_cell import GRUCell
 import numpy as np
 import gc
 import os
@@ -87,9 +86,17 @@ def build_model(emb_matrix, features, params):
     encoder = params['encoder']  # None, GRU, LSTM
 
     if encoder == 'GRU':
-        pass
+        embeddings, _ = tf.nn.dynamic_rnn(
+            cell=tf.nn.rnn_cell.GRUCell(params['encoder_units']),
+            inputs=embeddings,
+            dtype=tf.float64
+        )
     elif encoder == 'LSTM':
-        pass
+        embeddings, _ = tf.nn.dynamic_rnn(
+            cell=tf.nn.rnn_cell.LSTMCell(params['encoder_units']),
+            inputs=embeddings,
+            dtype=tf.float64
+        )
     else:
         print(f'{encoder} -- no such encoder, skipping ...')
 

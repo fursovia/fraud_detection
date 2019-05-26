@@ -11,6 +11,7 @@ from model.model_fn import model_fn
 from model.input_fn import input_fn, input_fn_in_memory
 from model.utils import save_dict_to_yaml, get_yaml_config, calculate_metrics
 from shutil import copyfile
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-dd', '--data_dir', default='data')
@@ -18,7 +19,7 @@ parser.add_argument('-md', '--model_dir', default='experiments')
 parser.add_argument('-a', '--aggregation', choices=['mean', 'max', 'concat'])
 
 parser.add_argument('-pre', '--use_pretrained', action='store_true')
-parser.add_argument('-ime', '--in_memory_embeddings', action='store_true')
+parser.add_argument('-ime', '--in_memory_embeddings', action='store_true')  # TODO: not working
 parser.add_argument('--seq_len', type=int, default=None)
 parser.add_argument('--num_epochs', type=int, default=None)
 parser.add_argument('--batch_size', type=int, default=None)
@@ -79,6 +80,7 @@ if __name__ == '__main__':
         train_input = lambda: input_fn(train_path, params, True)
         eval_input = lambda: input_fn(eval_path, params, False)
 
+    # TRAINING
     tf.estimator.train_and_evaluate(
         estimator,
         train_spec=tf.estimator.TrainSpec(
@@ -95,7 +97,6 @@ if __name__ == '__main__':
     )
 
     # SAVE PREDICTIONS
-
     if args.in_memory_embeddings:
         csv_path = os.path.join(args.data_dir, 'eval.csv')
         pkl_path = os.path.join(args.data_dir, 'eval.pkl')
@@ -120,7 +121,6 @@ if __name__ == '__main__':
     np.save(os.path.join(args.model_dir, 'eval_probs.npy'), probs)
 
     # CALCULATE METRICS
-
     labels = pd.read_csv(os.path.join(args.data_dir, 'eval.csv'))['target'].values
     metrics = calculate_metrics(probs, labels, thres=0.3)
 
