@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 import os
 import argparse
 from model.utils import save_vocab_to_txt_file
+from sklearn.preprocessing import StandardScaler
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-dd', '--data_dir', default='data')
@@ -150,6 +151,11 @@ if __name__ == '__main__':
     else:
         train = df[:int(0.7 * len(df))]
         valid = df[int(0.7 * len(df)):]
+
+    ss = StandardScaler()
+    ss.fit(train[META_FEATURES])
+    train[META_FEATURES] = ss.transform(train[META_FEATURES])
+    valid[META_FEATURES] = ss.transform(valid[META_FEATURES])
 
     all_treatments = ' '.join(df['treatments'].tolist()).strip()
     save_string(all_treatments, os.path.join(args.data_dir, 'all_treatments.txt'))

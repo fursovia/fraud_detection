@@ -73,7 +73,9 @@ def get_architecture(params, embeddings, meta_features=None):
 
     if meta_features is not None:
         with tf.name_scope('features_tower'):
-            meta_features_out = tf.layers.dense(meta_features, units=8)
+            meta_features_out = tf.layers.dense(meta_features, units=5, activation=tf.nn.relu)
+            meta_features_out = tf.layers.dense(meta_features_out, units=5)
+
             out = tf.concat([out, meta_features_out], axis=-1)
 
     with tf.name_scope('output_logits'):
