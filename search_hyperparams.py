@@ -36,24 +36,13 @@ if __name__ == "__main__":
     params = get_yaml_config(os.path.join(args.parent_dir, 'config.yaml'))
     data_dir = args.data_dir
 
-    # emb_dims = [50, 100, 300]
-    # use_pretrained_options = [True, False]
-    # units = [[32, 16], [64, 32], [128, 64]]
-    # seq_lens = np.arange(5, 101, 5)
-    # vocab_fracs = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    # sizes = [(2 ** (i + 1), 2 ** i) for i in range(1, 10)]
-    # emb_dims = [30, 61, 72, 75, 90, 150, 300]
-    # emb_dims = [50, 100, 300]
-    # filenames = glob.glob('data/percent*')
-    filenames = ['data/percent_100']
+    for use_features in [True, False]:
+        for encoder in ['no_encoder', 'GRU', 'biGRU', 'LSTM', 'biLSTM']:
+            for agg_strategy in ['mean', 'max', 'concat']:
 
-    for filename in filenames:
+                params['features'] = use_features
+                params['encoder'] = encoder
+                params['aggregation'] = agg_strategy
 
-        data_dir = filename
-        percent = re.sub(r'[^0-9]', '', filename)
-
-        # params['emb_dim'] = emb_dim
-        # params['word2vec_filename'] = f'data/word2vec_treatments_{emb_dim}.txt'
-
-        job_name = f'swem_max_percent={percent}'
-        launch_training_job(args.parent_dir, data_dir, job_name, params)
+                job_name = f'swem_{agg_strategy}_encoder={encoder}_features={str(use_features)}'
+                launch_training_job(args.parent_dir, data_dir, job_name, params)

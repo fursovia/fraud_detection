@@ -63,9 +63,9 @@ def get_architecture(params, embeddings, meta_features=None):
         out = tf.reduce_mean(embeddings, axis=1)
     elif aggregation == 'concat':
         if params['encoder'] in ['GRU', 'biGRU', 'LSTM', 'biLSTM']:
-            out = tf.reshape(embeddings, [params['seq_len'] * params['encoder_units'], -1])
+            out = tf.reshape(embeddings, [tf.shape(embeddings)[0], params['seq_len'] * params['encoder_units']])
         else:
-            out = tf.reshape(embeddings, [params['seq_len'] * params['emb_dim'], -1])
+            out = tf.reshape(embeddings, [tf.shape(embeddings)[0], params['seq_len'] * params['emb_dim']])
     else:
         raise NotImplementedError(f'{aggregation} --- No such aggregation strategy')
 
