@@ -8,9 +8,6 @@ trainable_emb: true
 in_memory_embeddings: false
 use_pretrained: false
 emb_dim: 300
-units:
-  swem_max: 128
-  swem_aver: 128
-  swem_max_features: [128, 64]
-  gru: [128, 64]
-  gru_feats: [128, 64]
+num_units: 128
+aggregation: 'mean'
+encoder: 'GRU'

@@ -56,70 +56,23 @@ def load_word2vec(filename, vocab_path):
 
 def get_architecture(params, embeddings, meta_features=None):
 
-    name = params['arch_name']
+    aggregation = params['aggregation']  # mean, max, concat
 
-    if name == 'swem_max':
+    if aggregation == 'max':
         out = tf.reduce_max(embeddings, axis=1)
-
-        out = tf.layers.dense(out, params['units'][name])
-        out = tf.nn.relu(out)
-
-    elif name == 'swem_aver':
+    elif aggregation == 'mean':
         out = tf.reduce_mean(embeddings, axis=1)
-
-        out = tf.layers.dense(out, params['units'][name])
-        out = tf.nn.relu(out)
-
-    elif name == 'swem_max_features':
-
-        with tf.name_scope('features'):
-            meta_features = tf.layers.dense(meta_features, 5)
-
-        with tf.name_scope('treatments'):
-            out = tf.reduce_max(embeddings, axis=1)
-
-            out = tf.layers.dense(out, params['units'][name][0])
-            out = tf.nn.relu(out)
-
-            out = tf.layers.dense(out, params['units'][name][1])
-            out = tf.nn.relu(out)
-
-        with tf.name_scope('concat'):
-            out = tf.concat([out, meta_features], axis=-1)
-
-    elif name == 'gru':
-        all_states, last_state = tf.nn.dynamic_rnn(
-            cell=GRUCell(params['units'][name][0]),
-            inputs=embeddings,
-            dtype=tf.float64
-        )
-
-        out = tf.reduce_mean(all_states, axis=1)
-
-        out = tf.layers.dense(out, params['units'][name][1])
-        out = tf.nn.relu(out)
-
-    elif name == 'gru_feats':
-
-        with tf.name_scope('features'):
-            meta_features = tf.layers.dense(meta_features, 5)
-
-        with tf.name_scope('treatments'):
-            all_states, last_state = tf.nn.dynamic_rnn(
-                cell=GRUCell(params['units'][name][0]),
-                inputs=embeddings,
-                dtype=tf.float64)
-
-            out = tf.reduce_mean(all_states, axis=1)
-
-            out = tf.layers.dense(out, params['units'][name][1])
-            out = tf.nn.relu(out)
-
-        with tf.name_scope('concat'):
-            out = tf.concat([out, meta_features], axis=-1)
-
+    elif aggregation == 'concat':
+        out = tf.reshape(embeddings, [tf.shape(embeddings)[0], -1])
     else:
-        raise NotImplemented(f'{name} is not implemented')
+        raise NotImplementedError(f'{aggregation} --- No such aggregation strategy')
+
+    out = tf.layers.dense(out, params['num_units'], activation=tf.nn.relu)
+
+    if meta_features is not None:
+        with tf.name_scope('features_tower'):
+            meta_features_out = tf.layers.dense(meta_features, units=8)
+            out = tf.concat([out, meta_features_out], axis=-1)
 
     with tf.name_scope('output_logits'):
         out = tf.layers.dense(out, 2, name='output_logits')
@@ -130,6 +83,15 @@ def get_architecture(params, embeddings, meta_features=None):
 def build_model(emb_matrix, features, params):
 
     embeddings = tf.nn.embedding_lookup(emb_matrix, features['treatments'], name='emb_matrix_lookup')
+
+    encoder = params['encoder']  # None, GRU, LSTM
+
+    if encoder == 'GRU':
+        pass
+    elif encoder == 'LSTM':
+        pass
+    else:
+        print(f'{encoder} -- no such encoder, skipping ...')
 
     meta_features = features['meta_features'] if 'meta_features' in features else None
 

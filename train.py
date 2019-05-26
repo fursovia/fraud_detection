@@ -13,14 +13,10 @@ from model.utils import save_dict_to_yaml, get_yaml_config, calculate_metrics
 from shutil import copyfile
 
 parser = argparse.ArgumentParser()
-
 parser.add_argument('-dd', '--data_dir', default='data')
 parser.add_argument('-md', '--model_dir', default='experiments')
-parser.add_argument('-a', '--architecture', choices=['swem_aver',
-                                                     'swem_max',
-                                                     'swem_max_features',
-                                                     'gru',
-                                                     'gru_feats'])
+parser.add_argument('-a', '--aggregation', choices=['mean', 'max', 'concat'])
+
 parser.add_argument('-pre', '--use_pretrained', action='store_true')
 parser.add_argument('-ime', '--in_memory_embeddings', action='store_true')
 parser.add_argument('--seq_len', type=int, default=None)
@@ -29,7 +25,7 @@ parser.add_argument('--batch_size', type=int, default=None)
 parser.add_argument('--learning_rate', type=float, default=None)
 parser.add_argument('--vocab_frac', type=float, default=None)
 
-parser.set_defaults(architecture='swem_max_features')
+parser.set_defaults(aggregation=None)
 parser.set_defaults(use_pretrained=None)
 parser.set_defaults(in_memory_embeddings=None)
 
@@ -53,19 +49,15 @@ if __name__ == '__main__':
     params['num_treatments'] = int(sum(1 for _ in open(params['treatments_vocab_path'], 'r')) * vocab_fraq) + 1
     params['train_size'] = pd.read_csv(os.path.join(args.data_dir, 'train.csv')).shape[0]
 
-    params['arch_name'] = args.architecture if 'architecture' not in params else params['architecture']
-    params['use_pretrained'] = args.use_pretrained if args.use_pretrained is not None else params['use_pretrained']
-    params['seq_len'] = args.seq_len if args.seq_len is not None else params['seq_len']
-    params['in_memory_embeddings'] = args.in_memory_embeddings if args.in_memory_embeddings is not None else params['in_memory_embeddings']
-    params['num_epochs'] = args.num_epochs if args.num_epochs is not None else params['num_epochs']
-    params['batch_size'] = args.batch_size if args.batch_size is not None else params['batch_size']
-    params['learning_rate'] = args.learning_rate if args.learning_rate is not None else params['learning_rate']
+    for key, val in args.__dict__.items():
+        params[key] = val if val is not None else params[key]
 
     for key, val in params.items():
-        print(f'{key} = {val}')
+        print(f'{key} >>>>>>>>>> {val}')
 
     config = tf.estimator.RunConfig(tf_random_seed=24,
-                                    save_checkpoints_steps=int(params['train_size'] / params['batch_size']),
+                                    # uncomment to calculate metrics on validation every K steps
+                                    # save_checkpoints_steps=int(params['train_size'] / params['batch_size']),
                                     keep_checkpoint_max=None,
                                     model_dir=args.model_dir,
                                     save_summary_steps=20)
