@@ -29,7 +29,8 @@ if __name__ == '__main__':
     treatments = data['treatments'].tolist()
     treatment_types = data['types'].tolist()
 
-    sizes = [50, 100, 300]
+    # sizes = [50, 100, 300]
+    sizes = [500, 700, 1000]
 
     # TREATMENTS
     documents = [doc.split() for doc in treatments]

@@ -5,6 +5,7 @@ Here we define inputs to the model
 import sys
 sys.path.append('..')
 import tensorflow as tf
+import pickle as pkl
 import pandas as pd
 from data_prep import META_FEATURES
 
@@ -55,13 +56,41 @@ def input_fn(data_path, params, train_time=True):
                                                tf.cast(feats['meta_features'], dtype=tf.float64),
                                                labs))
 
-    # 5 is the number of features
     padded_shapes = (tf.TensorShape([params['seq_len']]), tf.TensorShape([num_features]), tf.TensorShape([]))
     padding_values = (treat_pad_word, fake_padding1, fake_padding2)
 
     dataset = dataset.padded_batch(
         batch_size=params['batch_size'], padded_shapes=padded_shapes, padding_values=padding_values
     )
+
+    dataset = dataset.map(lambda treats, feats,  y: ({'treatments': treats, 'meta_features': feats}, y))
+    dataset = dataset.prefetch(buffer_size=None)
+
+    return dataset
+
+
+def input_fn_in_memory(data_path, pickle_path, params, train_time=True):
+
+    embeddings = pkl.load(open(pickle_path, 'rb'))  # [data_size, time_steps, emb_dim]
+    data = pd.read_csv(data_path)
+
+    dataset = tf.data.Dataset.from_tensor_slices((
+        {
+            'treatments': embeddings,
+            'meta_features': data[META_FEATURES].values,
+        },
+        data['target'].values
+    ))
+
+    if train_time:
+        dataset = dataset.shuffle(params['train_size'])
+        dataset = dataset.repeat(params['num_epochs'])
+
+    dataset = dataset.map(lambda feats, labs: (tf.cast(feats['treatments'], dtype=tf.float64),
+                                               tf.cast(feats['meta_features'], dtype=tf.float64),
+                                               labs))
+
+    dataset = dataset.batch(batch_size=params['batch_size'])
 
     dataset = dataset.map(lambda treats, feats,  y: ({'treatments': treats, 'meta_features': feats}, y))
     dataset = dataset.prefetch(buffer_size=None)

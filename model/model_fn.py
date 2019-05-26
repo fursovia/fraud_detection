@@ -148,6 +148,7 @@ def model_fn(features, labels, mode, params):
 
         emb_matrix = tf.get_variable('treatments_embeddings',
                                      shape=[params['num_treatments'], emb_dim],
+                                     trainable=params['trainable_emb'],
                                      dtype=tf.float64)
 
     def init_fn(scaffold, sess):

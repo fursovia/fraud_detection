@@ -3,6 +3,8 @@
 import argparse
 import os
 import numpy as np
+import glob
+import re
 from subprocess import check_call
 import sys
 from model.utils import get_yaml_config, save_dict_to_yaml
@@ -32,6 +34,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     params = get_yaml_config(os.path.join(args.parent_dir, 'config.yaml'))
+    data_dir = args.data_dir
 
     # emb_dims = [50, 100, 300]
     # use_pretrained_options = [True, False]
@@ -39,11 +42,18 @@ if __name__ == "__main__":
     # seq_lens = np.arange(5, 101, 5)
     # vocab_fracs = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     # sizes = [(2 ** (i + 1), 2 ** i) for i in range(1, 10)]
-    emb_dims = [30, 61, 72, 75, 90, 150, 300]
+    # emb_dims = [30, 61, 72, 75, 90, 150, 300]
+    # emb_dims = [50, 100, 300]
+    # filenames = glob.glob('data/percent*')
+    filenames = ['data/percent_100']
 
-    for emb_dim in emb_dims:
+    for filename in filenames:
 
-        params['emb_dim'] = emb_dim
+        data_dir = filename
+        percent = re.sub(r'[^0-9]', '', filename)
 
-        job_name = f'swem_max_emb_size={emb_dim}'
-        launch_training_job(args.parent_dir, args.data_dir, job_name, params)
+        # params['emb_dim'] = emb_dim
+        # params['word2vec_filename'] = f'data/word2vec_treatments_{emb_dim}.txt'
+
+        job_name = f'swem_max_percent={percent}'
+        launch_training_job(args.parent_dir, data_dir, job_name, params)

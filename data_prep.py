@@ -17,7 +17,7 @@ parser.add_argument('--random_split', action='store_true')
 parser.add_argument('-s', '--sample', action='store_true')
 
 parser.set_defaults(sample=False)
-parser.set_defaults(random_split=False)
+parser.set_defaults(random_split=True)
 
 META_FEATURES = ['amount', 'age', 'sex', 'ins_type', 'speciality']
 

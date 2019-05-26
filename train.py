@@ -8,7 +8,7 @@ import tensorflow as tf
 import pandas as pd
 import numpy as np
 from model.model_fn import model_fn
-from model.input_fn import input_fn
+from model.input_fn import input_fn, input_fn_in_memory
 from model.utils import save_dict_to_yaml, get_yaml_config, calculate_metrics
 from shutil import copyfile
 
@@ -22,6 +22,7 @@ parser.add_argument('-a', '--architecture', choices=['swem_aver',
                                                      'gru',
                                                      'gru_feats'])
 parser.add_argument('-pre', '--use_pretrained', action='store_true')
+parser.add_argument('-ime', '--in_memory_embeddings', action='store_true')
 parser.add_argument('--seq_len', type=int, default=None)
 parser.add_argument('--num_epochs', type=int, default=None)
 parser.add_argument('--batch_size', type=int, default=None)
@@ -29,7 +30,8 @@ parser.add_argument('--learning_rate', type=float, default=None)
 parser.add_argument('--vocab_frac', type=float, default=None)
 
 parser.set_defaults(architecture='swem_max_features')
-parser.set_defaults(use_pretrained=False)
+parser.set_defaults(use_pretrained=None)
+parser.set_defaults(in_memory_embeddings=None)
 
 
 if __name__ == '__main__':
@@ -52,11 +54,15 @@ if __name__ == '__main__':
     params['train_size'] = pd.read_csv(os.path.join(args.data_dir, 'train.csv')).shape[0]
 
     params['arch_name'] = args.architecture if 'architecture' not in params else params['architecture']
-    params['use_pretrained'] = args.use_pretrained if 'use_pretrained' not in params else params['use_pretrained']
+    params['use_pretrained'] = args.use_pretrained if args.use_pretrained is not None else params['use_pretrained']
     params['seq_len'] = args.seq_len if args.seq_len is not None else params['seq_len']
+    params['in_memory_embeddings'] = args.in_memory_embeddings if args.in_memory_embeddings is not None else params['in_memory_embeddings']
     params['num_epochs'] = args.num_epochs if args.num_epochs is not None else params['num_epochs']
     params['batch_size'] = args.batch_size if args.batch_size is not None else params['batch_size']
     params['learning_rate'] = args.learning_rate if args.learning_rate is not None else params['learning_rate']
+
+    for key, val in params.items():
+        print(f'{key} = {val}')
 
     config = tf.estimator.RunConfig(tf_random_seed=24,
                                     save_checkpoints_steps=int(params['train_size'] / params['batch_size']),
@@ -68,15 +74,28 @@ if __name__ == '__main__':
                                        params=params,
                                        config=config)
 
+    train_path = os.path.join(args.data_dir, 'train.csv')
+    eval_path = os.path.join(args.data_dir, 'eval.csv')
+
+    if args.in_memory_embeddings:
+        train_pickle_path = os.path.join(args.data_dir, 'train.pkl')
+        eval_pickle_path = os.path.join(args.data_dir, 'eval.pkl')
+
+        train_input = lambda: input_fn_in_memory(train_path, train_pickle_path, params, True)
+        eval_input = lambda: input_fn_in_memory(eval_path, eval_pickle_path, params, True)
+    else:
+        train_input = lambda: input_fn(train_path, params, True)
+        eval_input = lambda: input_fn(eval_path, params, False)
+
     tf.estimator.train_and_evaluate(
         estimator,
         train_spec=tf.estimator.TrainSpec(
-            input_fn=lambda: input_fn(os.path.join(args.data_dir, 'train.csv'), params, True),
+            input_fn=train_input,
             max_steps=int((params['train_size'] / params['batch_size']) * params['num_epochs']),
         ),
 
         eval_spec=tf.estimator.EvalSpec(
-            input_fn=lambda: input_fn(os.path.join(args.data_dir, 'eval.csv'), params, False),
+            input_fn=eval_input,
             steps=None,
             start_delay_secs=0,
             throttle_secs=60
@@ -85,7 +104,16 @@ if __name__ == '__main__':
 
     # SAVE PREDICTIONS
 
-    eval_preds = estimator.predict(lambda: input_fn(os.path.join(args.data_dir, 'eval.csv'), params, False))
+    if args.in_memory_embeddings:
+        csv_path = os.path.join(args.data_dir, 'eval.csv')
+        pkl_path = os.path.join(args.data_dir, 'eval.pkl')
+        eval_preds = estimator.predict(
+            lambda: input_fn_in_memory(csv_path, pkl_path, params, False)
+        )
+    else:
+        eval_preds = estimator.predict(
+            lambda: input_fn(os.path.join(args.data_dir, 'eval.csv'), params, False)
+        )
 
     eval_logits = []
     probs = []
