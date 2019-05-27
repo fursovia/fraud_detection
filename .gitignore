@@ -9,3 +9,4 @@ rasul/
 data
 archive
 params
+*.pkl
