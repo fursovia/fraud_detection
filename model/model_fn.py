@@ -69,17 +69,21 @@ def get_architecture(params, embeddings, meta_features=None):
     else:
         raise NotImplementedError(f'{aggregation} --- No such aggregation strategy')
 
-    hidden = tf.layers.dense(out, params['num_units'], activation=tf.nn.relu)
+    out = tf.layers.dense(out, params['num_units1'])
+    out = tf.nn.relu(out)
+
+    hidden = tf.layers.dense(out, params['num_units2'])
+    hidden_act = tf.nn.relu(hidden)
 
     if meta_features is not None:
         with tf.name_scope('features_tower'):
             meta_features_out = tf.layers.dense(meta_features, units=5, activation=tf.nn.relu)
             meta_features_out = tf.layers.dense(meta_features_out, units=5)
 
-            hidden = tf.concat([hidden, meta_features_out], axis=-1)
+            hidden_act = tf.concat([hidden_act, meta_features_out], axis=-1)
 
     with tf.name_scope('output_logits'):
-        logits = tf.layers.dense(hidden, 2, name='output_logits')
+        logits = tf.layers.dense(hidden_act, 2, name='output_logits')
 
     return logits, hidden
 
