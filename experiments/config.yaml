@@ -1,7 +1,7 @@
 batch_size: 2048
 vocab_frac: 1.0
 num_epochs: 3
-seq_len: 40
+seq_len: 80
 learning_rate: 0.001
 word2vec_filename: 'data/word2vec_treatments_300.txt'
 trainable_emb: true
@@ -11,6 +11,6 @@ features: false
 emb_dim: 300
 num_units1: 128
 num_units2: 64
-aggregation: 'mean'
-encoder: 'no_encoder'
+aggregation: 'max'
+encoder: 'GRU'
 encoder_units: 128
