@@ -69,19 +69,19 @@ def get_architecture(params, embeddings, meta_features=None):
     else:
         raise NotImplementedError(f'{aggregation} --- No such aggregation strategy')
 
-    out = tf.layers.dense(out, params['num_units'], activation=tf.nn.relu)
+    hidden = tf.layers.dense(out, params['num_units'], activation=tf.nn.relu)
 
     if meta_features is not None:
         with tf.name_scope('features_tower'):
             meta_features_out = tf.layers.dense(meta_features, units=5, activation=tf.nn.relu)
             meta_features_out = tf.layers.dense(meta_features_out, units=5)
 
-            out = tf.concat([out, meta_features_out], axis=-1)
+            hidden = tf.concat([hidden, meta_features_out], axis=-1)
 
     with tf.name_scope('output_logits'):
-        out = tf.layers.dense(out, 2, name='output_logits')
+        logits = tf.layers.dense(hidden, 2, name='output_logits')
 
-    return out
+    return logits, hidden
 
 
 def build_model(emb_matrix, features, params):
@@ -123,9 +123,9 @@ def build_model(emb_matrix, features, params):
 
     meta_features = features['meta_features'] if params['features'] else None
 
-    out = get_architecture(params, embeddings, meta_features)
+    logits, hidden = get_architecture(params, embeddings, meta_features)
 
-    return out
+    return logits, hidden
 
 
 def model_fn(features, labels, mode, params):
@@ -155,12 +155,12 @@ def model_fn(features, labels, mode, params):
     scaffold = tf.train.Scaffold(init_fn=init_fn)
 
     with tf.variable_scope('model', reuse=tf.AUTO_REUSE):
-        logits = build_model(emb_matrix, features, params)
+        logits, hidden = build_model(emb_matrix, features, params)
 
     preds = tf.nn.softmax(logits)
 
     if mode == tf.estimator.ModeKeys.PREDICT:
-        predictions = {'logits': logits, 'preds': preds}
+        predictions = {'logits': logits, 'preds': preds, 'hidden': hidden}
         return tf.estimator.EstimatorSpec(mode=mode, predictions=predictions)
 
     # weights = tf.multiply(tf.add(tf.to_float(labels), 1), 0.7)  # 0.7 and 1.4 for 0 and 1
