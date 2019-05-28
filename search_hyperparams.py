@@ -35,42 +35,42 @@ if __name__ == "__main__":
 
     data_dir = args.data_dir
 
-    # params = get_yaml_config(os.path.join(args.parent_dir, 'config.yaml'))
-    # for use_features in [True, False]:
-    #     for encoder in ['no_encoder', 'GRU', 'biGRU', 'LSTM', 'biLSTM']:
-    #         for agg_strategy in ['mean', 'max', 'concat']:
-    #
-    #             params['features'] = use_features
-    #             params['encoder'] = encoder
-    #             params['aggregation'] = agg_strategy
-    #
-    #             job_name = f'swem_{agg_strategy}_encoder={encoder}_features={str(use_features)}'
-    #             launch_training_job(args.parent_dir, data_dir, job_name, params)
-    #
-    # params = get_yaml_config(os.path.join(args.parent_dir, 'config.yaml'))
-    # seq_lens = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-    # for seq_len in seq_lens:
-    #
-    #     params['seq_len'] = seq_len
-    #     job_name = f'swem_seq_len={seq_len}'
-    #     launch_training_job(args.parent_dir, data_dir, job_name, params)
-    #
-    # params = get_yaml_config(os.path.join(args.parent_dir, 'config.yaml'))
-    # unit_sizes = [(64, 32, 16), (128, 64, 32), (256, 128, 64), (512, 256, 128)]
-    # for emb_dim, num_units1, num_units2 in unit_sizes:
-    #     params['emb_dim'] = emb_dim
-    #     params['num_units1'] = num_units1
-    #     params['num_units2'] = num_units2
-    #
-    #     job_name = f'swem_emb_size={emb_dim},num_units1={num_units1},num_units2={num_units2}'
-    #     launch_training_job(args.parent_dir, data_dir, job_name, params)
+    params = get_yaml_config(os.path.join(args.parent_dir, 'config.yaml'))
+    for use_features in [True, False]:
+        for encoder in ['no_encoder', 'GRU', 'biGRU', 'LSTM', 'biLSTM']:
+            for agg_strategy in ['mean', 'max', 'concat']:
+
+                params['features'] = use_features
+                params['encoder'] = encoder
+                params['aggregation'] = agg_strategy
+
+                job_name = f'swem_{agg_strategy}_encoder={encoder}_features={str(use_features)}'
+                launch_training_job(args.parent_dir, data_dir, job_name, params)
+
+    params = get_yaml_config(os.path.join(args.parent_dir, 'config.yaml'))
+    seq_lens = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+    for seq_len in seq_lens:
+
+        params['seq_len'] = seq_len
+        job_name = f'swem_seq_len={seq_len}'
+        launch_training_job(args.parent_dir, data_dir, job_name, params)
+
+    params = get_yaml_config(os.path.join(args.parent_dir, 'config.yaml'))
+    unit_sizes = [(64, 32, 16), (128, 64, 32), (256, 128, 64), (512, 256, 128)]
+    for emb_dim, num_units1, num_units2 in unit_sizes:
+        params['emb_dim'] = emb_dim
+        params['num_units1'] = num_units1
+        params['num_units2'] = num_units2
+
+        job_name = f'swem_emb_size={emb_dim},num_units1={num_units1},num_units2={num_units2}'
+        launch_training_job(args.parent_dir, data_dir, job_name, params)
 
     params = get_yaml_config(os.path.join(args.parent_dir, 'config.yaml'))
     for use_pretrained in [True, False]:
         for emb_dim in [50, 100, 300, 500, 700, 1000]:
             params['emb_dim'] = emb_dim
             params['use_pretrained'] = use_pretrained
-            params['word2vec_filename'] = 'data/word2vec_treatments_{emb_dim}.txt'
+            params['word2vec_filename'] = f'data/word2vec_treatments_{emb_dim}.txt'
             job_name = f'swem_emb_size={emb_dim},pretrained={str(use_pretrained)}'
             launch_training_job(args.parent_dir, data_dir, job_name, params)
 
