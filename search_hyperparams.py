@@ -38,9 +38,9 @@ if __name__ == "__main__":
     params = get_yaml_config(os.path.join(args.parent_dir, 'config.yaml'))
 
     for fold in list(range(1, 11)):
-        data_dir = os.path.join(data_dir, f'fold_{fold}')
+        curr_data_dir = os.path.join(data_dir, f'fold_{fold}')
         job_name = f'swem_fold={fold}'
-        launch_training_job(args.parent_dir, data_dir, job_name, params)
+        launch_training_job(args.parent_dir, curr_data_dir, job_name, params)
 
     # for use_features in [True, False]:
     #     for encoder in ['no_encoder', 'GRU', 'biGRU', 'LSTM', 'biLSTM']:
