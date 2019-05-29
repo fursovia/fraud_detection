@@ -11,13 +11,13 @@ from model.model_fn import model_fn
 from model.input_fn import input_fn, input_fn_in_memory
 from model.utils import save_dict_to_yaml, get_yaml_config, calculate_metrics
 from shutil import copyfile
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 parser = argparse.ArgumentParser()
+parser.add_argument('-c', '--cuda', default='0')
 parser.add_argument('-dd', '--data_dir', default='data')
 parser.add_argument('-md', '--model_dir', default='experiments')
 parser.add_argument('-a', '--aggregation', choices=['mean', 'max', 'concat'])
-parser.add_argument('-e', '--encoder', choices=['GRU', 'biGRU', 'LSTM', 'biLSTM'])
+parser.add_argument('-e', '--encoder', choices=['GRU', 'biGRU', 'LSTM', 'biLSTM', 'no_encoder'])
 
 parser.add_argument('-f', '--features', action='store_true', help='Add feature tower?')
 parser.add_argument('-pre', '--use_pretrained', action='store_true')
@@ -39,6 +39,7 @@ if __name__ == '__main__':
     tf.reset_default_graph()
     tf.logging.set_verbosity(tf.logging.INFO)
     args = parser.parse_args()
+    os.environ['CUDA_VISIBLE_DEVICES'] = args.cuda
 
     if not os.path.exists(args.model_dir):
         os.makedirs(args.model_dir)

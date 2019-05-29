@@ -12,11 +12,12 @@ from model.utils import get_yaml_config, save_dict_to_yaml
 
 PYTHON = sys.executable
 parser = argparse.ArgumentParser()
+parser.add_argument('-c', '--cuda', default='0')
 parser.add_argument('-pd', '--parent_dir', default='experiments')
 parser.add_argument('-dd', '--data_dir', default='data')
 
 
-def launch_training_job(parent_dir, data_dir, job_name, params):
+def launch_training_job(parent_dir, data_dir, job_name, params, cuda='0'):
 
     model_dir = os.path.join(parent_dir, job_name)
     if not os.path.exists(model_dir):
@@ -24,8 +25,8 @@ def launch_training_job(parent_dir, data_dir, job_name, params):
 
     save_dict_to_yaml(params, os.path.join(model_dir, 'config.yaml'))
 
-    cmd = "{python} train.py --model_dir {model_dir} --data_dir {data_dir}"
-    cmd = cmd.format(python=PYTHON, model_dir=model_dir, data_dir=data_dir)
+    cmd = "{python} train.py --model_dir {model_dir} --data_dir {data_dir} --cuda {cuda}"
+    cmd = cmd.format(python=PYTHON, model_dir=model_dir, data_dir=data_dir, cuda=cuda)
     print(cmd)
     check_call(cmd, shell=True)
 
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     for fold in list(range(1, 11)):
         curr_data_dir = os.path.join(data_dir, f'fold_{fold}')
         job_name = f'swem_fold={fold}'
-        launch_training_job(args.parent_dir, curr_data_dir, job_name, params)
+        launch_training_job(args.parent_dir, curr_data_dir, job_name, params, args.cuda)
 
     # for use_features in [True, False]:
     #     for encoder in ['no_encoder', 'GRU', 'biGRU', 'LSTM', 'biLSTM']:
