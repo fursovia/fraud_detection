@@ -72,15 +72,15 @@ def get_architecture(params, embeddings, meta_features=None):
     out = tf.layers.dense(out, params['num_units1'])
     out = tf.nn.relu(out)
 
-    hidden = tf.layers.dense(out, params['num_units2'])
-    hidden_act = tf.nn.relu(hidden)
-
     if meta_features is not None:
         with tf.name_scope('features_tower'):
             meta_features_out = tf.layers.dense(meta_features, units=32, activation=tf.nn.relu)
             meta_features_out = tf.layers.dense(meta_features_out, units=16)
 
-            hidden_act = tf.concat([hidden_act, meta_features_out], axis=-1)
+            out = tf.concat([out, meta_features_out], axis=-1)
+
+    hidden = tf.layers.dense(out, params['num_units2'])
+    hidden_act = tf.nn.relu(hidden)
 
     with tf.name_scope('output_logits'):
         logits = tf.layers.dense(hidden_act, 2, name='output_logits')
