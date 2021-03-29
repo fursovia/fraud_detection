@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "fraud_detection"
+version = "0.1.0"
+description = ""
+authors = ["fursovia <fursov.ia@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.7.1"
+allennlp_models = "^2.2.0"
+jsonlines = "^2.0.0"
+torch = "^1.8.1"
+numpy = "^1.20.2"
+pandas = "^1.2.3"
+allennlp = "^2.2.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
