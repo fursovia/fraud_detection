@@ -1,4 +1,4 @@
-local VOCAB = import 'common/vocab.jsonnet';
+local TRAINER = import 'common/trainer.jsonnet';
 local LOADER = import 'common/loader.jsonnet';
 
 {
@@ -7,10 +7,17 @@ local LOADER = import 'common/loader.jsonnet';
   "validation_data_path": std.extVar("VALID_DATA_PATH"),
   "model": {
     "type": "fraud_classifier",
-    "embedder": "",
+    "embedder": {
+      "token_embedders": {
+        "tokens": {
+          "type": "embedding",
+          "embedding_dim": 64,
+        }
+      }
+    },
     "encoder": {
       "type": "gru",
-      "input_size": 192,
+      "input_size": 64,
       "hidden_size": 128,
       "num_layers": 2,
       "dropout": 0.4,
@@ -18,17 +25,6 @@ local LOADER = import 'common/loader.jsonnet';
     },
     "features_encoder": null,
   },
-  "data_loader": {
-    "batch_size": 64,
-    "shuffle": true,
-  },
-  "trainer": {
-    "num_epochs": 10,
-    "patience": 3,
-    "optimizer": {
-      "type": "adam",
-      "lr": 0.001
-    },
-    "cuda_device": -1
-  }
+  "data_loader": LOADER['data_loader'],
+  "trainer": TRAINER['trainer']
 }

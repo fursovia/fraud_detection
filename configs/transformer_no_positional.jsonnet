@@ -15,11 +15,15 @@ local LOADER = import 'common/loader.jsonnet';
         }
       }
     },
+    "seq_encoder": {
+      "type": "pytorch_transformer",
+      "num_layers": 6,
+      "positional_encoding": null
+    },
     "encoder": {
-      "type": "cnn",
+      "type": "boe",
       "embedding_dim": 64,
-      "num_filters": 32,
-      "conv_layer_activation": "relu",
+      "averaged": true,
     },
     "features_encoder": null,
   },

@@ -3,8 +3,9 @@ from typing import Dict, Optional
 import torch
 from allennlp.data import TextFieldTensors, Vocabulary
 from allennlp.models.model import Model
-from allennlp.modules import TextFieldEmbedder, FeedForward, Seq2VecEncoder
+from allennlp.modules import TextFieldEmbedder, FeedForward, Seq2VecEncoder, Seq2SeqEncoder
 from allennlp.nn.util import get_text_field_mask
+from allennlp.training.metrics.auc import Auc
 
 
 @Model.register("fraud_classifier")
@@ -14,11 +15,13 @@ class FraudClassifier(Model):
             vocab: Vocabulary,
             embedder: TextFieldEmbedder,
             encoder: Seq2VecEncoder,
+            seq_encoder: Optional[Seq2SeqEncoder] = None,
             features_encoder: Optional[FeedForward] = None,
     ) -> None:
         super().__init__(vocab)
         self._embedder = embedder
         self._encoder = encoder
+        self._seq_encoder = seq_encoder
         self._features_encoder = features_encoder
 
         output_dim = self._encoder.get_output_dim()
@@ -27,6 +30,7 @@ class FraudClassifier(Model):
 
         self._linear = torch.nn.Linear(output_dim, 2)
         self._loss = torch.nn.CrossEntropyLoss()
+        self._auc = Auc()
 
     def forward(
             self,
@@ -38,10 +42,13 @@ class FraudClassifier(Model):
         mask = get_text_field_mask(treatments)
 
         embeddings = self._embedder(treatments)
+        if self._seq_encoder is not None:
+            embeddings = self._seq_encoder(embeddings, mask)
+
         context_embeddings = self._encoder(embeddings, mask)
 
         if self._features_encoder is not None:
-            feature_embeddings = self._features_encoder(features)
+            feature_embeddings = self._features_encoder(features.float())
             context_embeddings = torch.cat((context_embeddings, feature_embeddings), dim=-1)
 
         logits = self._linear(context_embeddings)
@@ -51,6 +58,7 @@ class FraudClassifier(Model):
         if target is not None:
             loss = self._loss(logits, target.long().view(-1))
             output_dict["loss"] = loss
+            self._auc(predictions=probs[:, 1], gold_labels=target)
         return output_dict
 
     def make_output_human_readable(
@@ -71,3 +79,7 @@ class FraudClassifier(Model):
             classes.append(label_str)
         output_dict["label"] = classes
         return output_dict
+
+    def get_metrics(self, reset: bool = False) -> Dict[str, float]:
+        metrics = {"roc_auc": self._auc.get_metric(reset)}
+        return metrics

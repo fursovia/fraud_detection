@@ -15,13 +15,23 @@ local LOADER = import 'common/loader.jsonnet';
         }
       }
     },
-    "encoder": {
-      "type": "cnn",
-      "embedding_dim": 64,
-      "num_filters": 32,
-      "conv_layer_activation": "relu",
+    "seq_encoder": {
+      "type": "pytorch_transformer",
+      "num_layers": 6,
+      "positional_encoding": "embedding"
     },
-    "features_encoder": null,
+    "encoder": {
+      "type": "boe",
+      "embedding_dim": 64,
+      "averaged": true,
+    },
+    "features_encoder": {
+      "input_dim": 5,
+      "num_layers": 2,
+      "hidden_dims": [16, 32],
+      "activations": "relu",
+      "dropout": 0.1
+    },
   },
   "data_loader": LOADER['data_loader'],
   "trainer": TRAINER['trainer']

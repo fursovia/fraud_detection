@@ -21,7 +21,13 @@ local LOADER = import 'common/loader.jsonnet';
       "num_filters": 32,
       "conv_layer_activation": "relu",
     },
-    "features_encoder": null,
+    "features_encoder": {
+      "input_dim": 5,
+      "num_layers": 2,
+      "hidden_dims": [16, 32],
+      "activations": "relu",
+      "dropout": 0.1
+    },
   },
   "data_loader": LOADER['data_loader'],
   "trainer": TRAINER['trainer']

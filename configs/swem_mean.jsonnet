@@ -16,10 +16,9 @@ local LOADER = import 'common/loader.jsonnet';
       }
     },
     "encoder": {
-      "type": "cnn",
+      "type": "bag_of_embeddings",
       "embedding_dim": 64,
-      "num_filters": 32,
-      "conv_layer_activation": "relu",
+      "averaged": true,
     },
     "features_encoder": null,
   },

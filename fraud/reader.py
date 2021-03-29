@@ -7,13 +7,13 @@ from allennlp.data.dataset_readers.dataset_reader import DatasetReader
 from allennlp.data.fields import TextField, LabelField, TensorField
 from allennlp.data.instance import Instance
 from allennlp.data.token_indexers import SingleIdTokenIndexer
-from allennlp.data.tokenizers import  WhitespaceTokenizer
+from allennlp.data.tokenizers import WhitespaceTokenizer
 
 
 @DatasetReader.register("fraud_reader")
 class FraudReader(DatasetReader):
     def __init__(self, ) -> None:
-        super().__init__(max_instances=10)
+        super().__init__(max_instances=None)
         self._tokenizer = WhitespaceTokenizer()
 
     def text_to_instance(
@@ -31,7 +31,7 @@ class FraudReader(DatasetReader):
 
         treatments = self._tokenizer.tokenize(" ".join(treatments))
         types = self._tokenizer.tokenize(" ".join(types))
-        features = np.array([amount, age, sex, ins_type, speciality, treatments])
+        features = np.array([amount, age, sex, ins_type, speciality])
 
         fields = {
             "treatments": TextField(treatments, {"tokens": SingleIdTokenIndexer()}),
@@ -40,7 +40,7 @@ class FraudReader(DatasetReader):
         }
 
         if target is not None:
-            fields["target"] = LabelField(label=target)
+            fields["target"] = LabelField(label=target, skip_indexing=True)
         return Instance(fields)
 
     def _read(self, file_path: str):
