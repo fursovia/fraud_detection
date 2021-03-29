@@ -17,6 +17,7 @@ local LOADER = import 'common/loader.jsonnet';
     },
     "seq_encoder": {
       "type": "pytorch_transformer",
+      "input_dim": 64,
       "num_layers": 6,
       "positional_encoding": null
     },
