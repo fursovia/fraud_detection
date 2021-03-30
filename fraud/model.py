@@ -8,8 +8,6 @@ from allennlp.nn.util import get_text_field_mask
 from allennlp.training.metrics.auc import Auc
 
 
-from allennlp.models.archival import load_archive
-
 @Model.register("fraud_classifier")
 class FraudClassifier(Model):
     def __init__(
