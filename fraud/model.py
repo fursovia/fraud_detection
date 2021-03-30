@@ -8,6 +8,8 @@ from allennlp.nn.util import get_text_field_mask
 from allennlp.training.metrics.auc import Auc
 
 
+from allennlp.models.archival import load_archive
+
 @Model.register("fraud_classifier")
 class FraudClassifier(Model):
     def __init__(
@@ -73,10 +75,11 @@ class FraudClassifier(Model):
         classes = []
         for prediction in predictions_list:
             label_idx = prediction.argmax(dim=-1).item()
-            label_str = self.vocab.get_index_to_token_vocabulary(self._label_namespace).get(
-                label_idx, str(label_idx)
-            )
-            classes.append(label_str)
+            label_idx = str(label_idx)
+            # label_str = self.vocab.get_index_to_token_vocabulary(self._label_namespace).get(
+            #     label_idx, str(label_idx)
+            # )
+            classes.append(label_idx)
         output_dict["label"] = classes
         return output_dict
 
