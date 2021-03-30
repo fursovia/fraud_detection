@@ -40,7 +40,7 @@ class FraudClassifier(Model):
             **kwargs,
     ) -> Dict[str, torch.Tensor]:
         mask = get_text_field_mask(treatments)
-
+        # shape: [batch_size, seq_length] -> [batch_size, seq_length, emb_dim]
         embeddings = self._embedder(treatments)
         if self._seq_encoder is not None:
             embeddings = self._seq_encoder(embeddings, mask)
@@ -48,6 +48,7 @@ class FraudClassifier(Model):
         context_embeddings = self._encoder(embeddings, mask)
 
         if self._features_encoder is not None:
+            # shape: [batch_size, 5] -> [batch_size, 16]
             feature_embeddings = self._features_encoder(features.float())
             context_embeddings = torch.cat((context_embeddings, feature_embeddings), dim=-1)
 

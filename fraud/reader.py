@@ -31,6 +31,7 @@ class FraudReader(DatasetReader):
 
         treatments = self._tokenizer.tokenize(" ".join(treatments))
         types = self._tokenizer.tokenize(" ".join(types))
+        # we can use embeddings for [sex, ins_type, speciality]
         features = np.array([amount, age, sex, ins_type, speciality])
 
         fields = {
