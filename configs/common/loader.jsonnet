@@ -1,6 +1,6 @@
 {
   "data_loader": {
-    "batch_size": 4096,
+    "batch_size": 2048,
     "shuffle": true,
   }
 }
