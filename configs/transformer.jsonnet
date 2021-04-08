@@ -28,6 +28,6 @@ local LOADER = import 'common/loader.jsonnet';
     },
     "features_encoder": null,
   },
-  "data_loader": LOADER['data_loader'],
+  "data_loader": LOADER['data_loader'] + {"batch_size": 512},
   "trainer": TRAINER['trainer']
 }

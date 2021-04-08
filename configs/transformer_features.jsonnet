@@ -34,6 +34,6 @@ local LOADER = import 'common/loader.jsonnet';
       "dropout": 0.1
     },
   },
-  "data_loader": LOADER['data_loader'],
+  "data_loader": LOADER['data_loader'] + {"batch_size": 512},
   "trainer": TRAINER['trainer']
 }
