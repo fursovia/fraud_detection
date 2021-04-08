@@ -3,7 +3,7 @@ from typing import Dict, Optional
 import torch
 from allennlp.data import TextFieldTensors, Vocabulary
 from allennlp.models.model import Model
-from allennlp.modules import TextFieldEmbedder, FeedForward, Seq2VecEncoder, Seq2SeqEncoder
+from allennlp.modules import TextFieldEmbedder, FeedForward, Seq2VecEncoder, Seq2SeqEncoder, Highway
 from allennlp.nn.util import get_text_field_mask
 from allennlp.training.metrics.auc import Auc
 
@@ -15,6 +15,8 @@ class FraudClassifier(Model):
             vocab: Vocabulary,
             embedder: TextFieldEmbedder,
             encoder: Seq2VecEncoder,
+            num_highway_layers: int = 3,
+            dropout: float = 0.1,
             seq_encoder: Optional[Seq2SeqEncoder] = None,
             features_encoder: Optional[FeedForward] = None,
     ) -> None:
@@ -28,6 +30,8 @@ class FraudClassifier(Model):
         if self._features_encoder is not None:
             output_dim += self._features_encoder.get_output_dim()
 
+        self._dropout = torch.nn.Dropout(dropout)
+        self._highway = Highway(input_dim=output_dim, num_layers=num_highway_layers)
         self._linear = torch.nn.Linear(output_dim, 2)
         self._loss = torch.nn.CrossEntropyLoss()
         self._auc = Auc()
@@ -52,6 +56,8 @@ class FraudClassifier(Model):
             feature_embeddings = self._features_encoder(features.float())
             context_embeddings = torch.cat((context_embeddings, feature_embeddings), dim=-1)
 
+        context_embeddings = self._dropout(context_embeddings)
+        context_embeddings = self._highway(context_embeddings)
         logits = self._linear(context_embeddings)
         probs = torch.nn.functional.softmax(logits, dim=-1)
 
