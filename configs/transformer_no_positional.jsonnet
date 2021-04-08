@@ -15,4 +15,5 @@ config + {
         },
         "features_encoder": null
     },
+    "data_loader"+: {"batch_size": 512}
 }
