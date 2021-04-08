@@ -10,7 +10,7 @@ for config_path in ./configs/*.jsonnet; do
 
   TRAIN_DATA_PATH=./data_full/train.jsonl \
     VALID_DATA_PATH=./data_full/valid.jsonl \
-    allennlp train ${config_path} -s ./logs/${DATE}/${CONFIG_NAME} --include-package fraud
+    allennlp train ${config_path} -s ./logs/${DATE}/${CONFIG_NAME}__orig --include-package fraud
 
 done
 
@@ -24,7 +24,7 @@ for config_path in ./configs/*.jsonnet; do
 
   TRAIN_DATA_PATH=./data_shuffled_train/train.jsonl \
     VALID_DATA_PATH=./data_shuffled_train/valid.jsonl \
-    allennlp train ${config_path} -s ./logs/${DATE}/${CONFIG_NAME} --include-package fraud
+    allennlp train ${config_path} -s ./logs/${DATE}/${CONFIG_NAME}__shuffled_train --include-package fraud
 
 done
 
@@ -38,6 +38,6 @@ for config_path in ./configs/*.jsonnet; do
 
   TRAIN_DATA_PATH=./data_shuffled_all/train.jsonl \
     VALID_DATA_PATH=./data_shuffled_all/valid.jsonl \
-    allennlp train ${config_path} -s ./logs/${DATE}/${CONFIG_NAME} --include-package fraud
+    allennlp train ${config_path} -s ./logs/${DATE}/${CONFIG_NAME}__shuffled_all --include-package fraud
 
 done
