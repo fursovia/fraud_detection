@@ -19,7 +19,6 @@ class FraudClassifier(Model):
             dropout: float = 0.1,
             seq_encoder: Optional[Seq2SeqEncoder] = None,
             features_encoder: Optional[FeedForward] = None,
-            weight: float = 0.9,
     ) -> None:
         super().__init__(vocab)
         self._embedder = embedder
@@ -34,7 +33,7 @@ class FraudClassifier(Model):
         self._dropout = torch.nn.Dropout(dropout)
         self._highway = Highway(input_dim=output_dim, num_layers=num_highway_layers)
         self._linear = torch.nn.Linear(output_dim, 2)
-        self._loss = torch.nn.CrossEntropyLoss(weight=torch.tensor([1 - weight, weight]))
+        self._loss = torch.nn.CrossEntropyLoss(weight=None)  # torch.tensor([1 - weight, weight])
         self._auc = Auc()
 
     def forward(
