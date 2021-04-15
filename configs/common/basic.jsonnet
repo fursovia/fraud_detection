@@ -12,9 +12,9 @@ local LOADER = import 'loader.jsonnet';
     "features_encoder": {
       "input_dim": 5,
       "num_layers": 2,
-      "hidden_dims": [16, 32],
-      "activations": "sigmoid",
-      "dropout": 0.5
+      "hidden_dims": [16, 8],
+      "activations": "tanh",
+      "dropout": 0.3
     },
     "embedder": {
       "token_embedders": {
