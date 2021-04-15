@@ -7,7 +7,7 @@
       "num_examples_per_class": 128
     },
     "batches_per_epoch": 32,
-    "shuffle": true,
+//    "shuffle": true,
   },
   "validation_data_loader": {
     "batch_size": 2048,
