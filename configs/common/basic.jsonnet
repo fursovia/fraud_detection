@@ -8,12 +8,12 @@ local LOADER = import 'loader.jsonnet';
   "model": {
     "type": "fraud_classifier",
     "num_highway_layers": 2,
-    "dropout": 0.8,
+    "dropout": 0.6,
     "features_encoder": {
       "input_dim": 5,
       "num_layers": 2,
       "hidden_dims": [16, 16],
-      "activations": "sigmoid",
+      "activations": "tanh",
       "dropout": 0.4
     },
     "embedder": {
