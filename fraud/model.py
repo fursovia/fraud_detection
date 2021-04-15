@@ -28,10 +28,7 @@ class FraudClassifier(Model):
 
         output_dim = self._encoder.get_output_dim()
         if self._features_encoder is not None:
-            self._batch_norm = torch.nn.BatchNorm1d(num_features=self._features_encoder.get_input_dim())
             output_dim += self._features_encoder.get_output_dim()
-        else:
-            self._batch_norm = None
 
         self._dropout = torch.nn.Dropout(dropout)
         self._highway = Highway(input_dim=output_dim, num_layers=num_highway_layers)
@@ -57,7 +54,6 @@ class FraudClassifier(Model):
         context_embeddings = self._dropout(context_embeddings)
 
         if self._features_encoder is not None:
-            features = self._batch_norm(features.float())
             # shape: [batch_size, 5] -> [batch_size, 16]
             feature_embeddings = self._features_encoder(features)
             context_embeddings = torch.cat((context_embeddings, feature_embeddings), dim=-1)
