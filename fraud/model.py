@@ -39,13 +39,14 @@ class FraudClassifier(Model):
     def forward(
             self,
             treatments: TextFieldTensors,
+            types: TextFieldTensors,
             features: torch.Tensor,
             target: Optional[torch.Tensor] = None,
             **kwargs,
     ) -> Dict[str, torch.Tensor]:
         mask = get_text_field_mask(treatments)
         # shape: [batch_size, seq_length] -> [batch_size, seq_length, emb_dim]
-        embeddings = self._embedder(treatments)
+        embeddings = self._embedder(treatments) + self._embedder(types)
         if self._seq_encoder is not None:
             embeddings = self._seq_encoder(embeddings, mask)
 
