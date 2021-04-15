@@ -20,7 +20,7 @@ local LOADER = import 'loader.jsonnet';
       "token_embedders": {
         "tokens": {
           "type": "embedding",
-          "embedding_dim": 256,
+          "embedding_dim": 128,
         }
       }
     },
