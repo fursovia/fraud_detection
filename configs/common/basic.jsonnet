@@ -7,12 +7,14 @@ local LOADER = import 'loader.jsonnet';
   "validation_data_path": std.extVar("VALID_DATA_PATH"),
   "model": {
     "type": "fraud_classifier",
+    "num_highway_layers": 2,
+    "dropout": 0.5,
     "features_encoder": {
       "input_dim": 5,
       "num_layers": 2,
       "hidden_dims": [16, 32],
       "activations": "sigmoid",
-      "dropout": 0.1
+      "dropout": 0.5
     },
     "embedder": {
       "token_embedders": {
