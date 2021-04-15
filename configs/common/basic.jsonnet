@@ -8,7 +8,7 @@ local LOADER = import 'loader.jsonnet';
   "model": {
     "type": "fraud_classifier",
     "num_highway_layers": 2,
-    "dropout": 0.5,
+    "dropout": 0.7,
     "features_encoder": {
       "input_dim": 5,
       "num_layers": 2,

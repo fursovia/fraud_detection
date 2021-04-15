@@ -7,6 +7,7 @@
       "type": "adam",
       "lr": 0.001
     },
-    "cuda_device": 0
+    "cuda_device": 0,
+    "callbacks": ["tensorboard"],
   }
 }
