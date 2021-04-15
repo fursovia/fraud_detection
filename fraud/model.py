@@ -55,7 +55,7 @@ class FraudClassifier(Model):
 
         if self._features_encoder is not None:
             # shape: [batch_size, 5] -> [batch_size, 16]
-            feature_embeddings = self._features_encoder(features)
+            feature_embeddings = self._features_encoder(features.float())
             context_embeddings = torch.cat((context_embeddings, feature_embeddings), dim=-1)
 
         context_embeddings = self._highway(context_embeddings)
