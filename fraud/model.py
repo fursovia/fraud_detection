@@ -61,7 +61,7 @@ class FraudClassifier(Model):
         logits = self._linear(context_embeddings)
         probs = torch.nn.functional.softmax(logits, dim=-1)
 
-        output_dict = dict(logits=logits, probs=probs)
+        output_dict = dict(logits=logits, probs=probs, context_embeddings=context_embeddings)
         if target is not None:
             loss = self._loss(logits, target.long().view(-1))
             output_dict["loss"] = loss
