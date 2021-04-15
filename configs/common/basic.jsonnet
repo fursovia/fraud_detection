@@ -13,8 +13,8 @@ local LOADER = import 'loader.jsonnet';
       "input_dim": 5,
       "num_layers": 2,
       "hidden_dims": [16, 16],
-      "activations": "tanh",
-      "dropout": 0.5
+      "activations": "sigmoid",
+      "dropout": 0.4
     },
     "embedder": {
       "token_embedders": {
