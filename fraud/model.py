@@ -28,7 +28,7 @@ class FraudClassifier(Model):
 
         output_dim = self._encoder.get_output_dim()
         if self._features_encoder is not None:
-            self._batch_norm = torch.nn.BatchNorm1d(num_features=self._features_encoder.get_output_dim())
+            self._batch_norm = torch.nn.BatchNorm1d(num_features=self._features_encoder.get_input_dim())
             output_dim += self._features_encoder.get_output_dim()
         else:
             self._batch_norm = None
