@@ -24,5 +24,6 @@ local LOADER = import 'loader.jsonnet';
     },
   },
   "data_loader": LOADER['data_loader'],
+  "validation_data_loader": LOADER['validation_data_loader'],
   "trainer": TRAINER['trainer']
 }
