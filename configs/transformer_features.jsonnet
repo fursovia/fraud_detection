@@ -14,5 +14,5 @@ config + {
           "averaged": true,
         },
     },
-    "data_loader"+: {"batch_size": 512}
+//    "data_loader"+: {"batch_size": 512}
 }
