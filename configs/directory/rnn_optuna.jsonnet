@@ -64,14 +64,14 @@ local hidden_dims = {
 //            {"type": "optuna_pruner"},
 //        ],
         "cuda_device": 0,
-        "num_epochs": 1,
-//        "num_epochs": 100,
+//        "num_epochs": 1,
+        "num_epochs": 100,
         "optimizer": {
             "type": "adam",
             "lr": lr
         },
-        "patience": 1,
-//        "patience": 5,
+//        "patience": 1,
+        "patience": 3,
         "validation_metric": "+roc_auc"
     },
 //    "distributed": {

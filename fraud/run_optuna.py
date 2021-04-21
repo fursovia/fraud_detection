@@ -2,18 +2,17 @@ from functools import partial
 
 import typer
 import optuna
-from optuna.integration.allennlp import AllenNLPPruningCallback
 
 
 def set_trial(trial: optuna.Trial):
     trial.suggest_categorical("rnn_type", ['gru', 'lstm'])
     trial.suggest_float("emb_dropout", 0.0, 0.9)
-    trial.suggest_int("embedding_dim", 8, 2048, log=True)
+    trial.suggest_int("embedding_dim", 8, 1024, log=True)
     trial.suggest_categorical("bidirectional", ['true', 'false'])
     trial.suggest_float("lstm_dropout", 0.0, 0.9)
-    trial.suggest_int("lstm_dim", 8, 2048, log=True)
-    # trial.suggest_int("num_examples_per_class", 8, 1024, log=True)
-    trial.suggest_int("num_examples_per_class", 8, 32, log=True)
+    trial.suggest_int("lstm_dim", 8, 1024, log=True)
+    trial.suggest_int("num_examples_per_class", 8, 512, log=True)
+    # trial.suggest_int("num_examples_per_class", 8, 32, log=True)
     trial.suggest_categorical("num_layers", [1, 2, 3, 4, 5])
     trial.suggest_categorical("num_highway_layers", [1, 2, 3, 4, 5])
     trial.suggest_categorical("hidden_dims_id", [str(x) for x in list(range(1, 11))])
