@@ -30,7 +30,6 @@ def set_trial(trial: optuna.Trial):
             'gelu',
             'prelu',
             'leaky_relu',
-            'threshold',
             'hardtanh',
             'sigmoid',
             'tanh',
@@ -42,8 +41,6 @@ def set_trial(trial: optuna.Trial):
             'selu'
         ]
     )
-
-    trial.suggest_categorical("bpps_dir", ["null", "data/raw_data/bpps"])
 
 
 def fraud_objective(
@@ -73,7 +70,7 @@ def main(
 ):
     study = optuna.create_study(
         storage="sqlite:///result/final_classifier.db",
-        sampler=optuna.samplers.CmaEsSampler(seed=245),
+        sampler=optuna.samplers.TPESampler(seed=245),
         study_name=study_name,
         pruner=optuna.pruners.HyperbandPruner(),
         direction="maximize",
