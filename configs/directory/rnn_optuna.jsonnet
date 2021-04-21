@@ -51,9 +51,9 @@ local hidden_dims = {
         "features_encoder": {
             "activations": features_act,
             "dropout": features_dropout,
-            "hidden_dims": hidden_dims["hidden_dims_id"],
+            "hidden_dims": hidden_dims[hidden_dims_id],
             "input_dim": 5,
-            "num_layers": std.length(hidden_dims["hidden_dims_id"])
+            "num_layers": std.length(hidden_dims[hidden_dims_id])
         },
         "num_highway_layers": num_highway_layers
     },
