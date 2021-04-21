@@ -8,7 +8,7 @@ config + {
           "hidden_size": 256,
           "num_layers": 1,
           "dropout": 0.4,
-          "bidirectional": false
+          "bidirectional": true
         },
     },
 }
