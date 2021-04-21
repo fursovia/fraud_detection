@@ -65,7 +65,7 @@ def main(
         serialization_dir: str,
         num_trials: int = 500,
         n_jobs: int = 1,
-        timeout: int = 60 * 60 * 24,
+        timeout: int = 60 * 60 * 48,
         study_name: str = "optuna_fraud"
 ):
     study = optuna.create_study(
