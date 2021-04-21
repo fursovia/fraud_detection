@@ -60,9 +60,9 @@ local hidden_dims = {
     "train_data_path": "./data/train.jsonl",
     "validation_data_path": "./data/valid.jsonl",
     "trainer": {
-        "callbacks": [
-            {"type": "optuna_pruner"},
-        ],
+//        "callbacks": [
+//            {"type": "optuna_pruner"},
+//        ],
         "cuda_device": 0,
         "num_epochs": 1,
 //        "num_epochs": 100,
@@ -74,9 +74,9 @@ local hidden_dims = {
 //        "patience": 5,
         "validation_metric": "+roc_auc"
     },
-    "distributed": {
-        "cuda_devices": [0, 1]
-    },
+//    "distributed": {
+//        "cuda_devices": [0, 1]
+//    },
     "data_loader": {
         "batch_sampler": {
             "type": "balanced",
