@@ -74,6 +74,9 @@ local hidden_dims = {
 //        "patience": 5,
         "validation_metric": "+roc_auc"
     },
+    "distributed": {
+        "cuda_devices": [0, 1]
+    },
     "data_loader": {
         "batch_sampler": {
             "type": "balanced",
