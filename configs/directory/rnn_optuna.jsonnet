@@ -57,8 +57,8 @@ local hidden_dims = {
         },
         "num_highway_layers": num_highway_layers
     },
-    "train_data_path": "./data_full/train.jsonl",
-    "validation_data_path": "./data_full/valid.jsonl",
+    "train_data_path": "./data/train.jsonl",
+    "validation_data_path": "./data/valid.jsonl",
     "trainer": {
         "callbacks": [
             {"type": "optuna_pruner"},
