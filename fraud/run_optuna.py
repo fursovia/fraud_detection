@@ -73,7 +73,7 @@ def main(
         storage="sqlite:///result/final_classifier.db",
         sampler=optuna.samplers.TPESampler(seed=245),
         study_name=study_name,
-        # pruner=optuna.pruners.HyperbandPruner(),
+        pruner=optuna.pruners.HyperbandPruner(),
         direction="maximize",
         load_if_exists=True,
     )
