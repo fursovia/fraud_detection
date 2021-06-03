@@ -1,10 +1,9 @@
 from typing import List, Optional
 
-import numpy as np
 import jsonlines
 from allennlp.common.file_utils import cached_path
 from allennlp.data.dataset_readers.dataset_reader import DatasetReader
-from allennlp.data.fields import TextField, LabelField, TensorField
+from allennlp.data.fields import TextField, LabelField
 from allennlp.data.instance import Instance
 from allennlp.data.token_indexers import SingleIdTokenIndexer
 from allennlp.data.tokenizers import WhitespaceTokenizer
@@ -32,12 +31,21 @@ class FraudReader(DatasetReader):
         treatments = self._tokenizer.tokenize(" ".join(treatments))
         types = self._tokenizer.tokenize(" ".join(types))
         # we can use embeddings for [sex, ins_type, speciality]
-        features = np.array([amount, age, sex, ins_type, speciality])
+        features = " ".join(
+            [
+                "AMOUNT_" + str(amount),
+                "AGE_" + str(age),
+                "GENDER_" + str(sex),
+                "INS_" + str(ins_type),
+                "SPEC_" + str(speciality),
+            ]
+        )
+        features = self._tokenizer.tokenize(features)
 
         fields = {
             "treatments": TextField(treatments, {"tokens": SingleIdTokenIndexer()}),
             "types": TextField(types, {"tokens": SingleIdTokenIndexer()}),
-            "features": TensorField(features),
+            "features": TextField(features, {"tokens": SingleIdTokenIndexer()}),
         }
 
         if target is not None:
