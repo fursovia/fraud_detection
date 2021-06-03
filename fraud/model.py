@@ -3,7 +3,7 @@ from typing import Dict, Optional
 import torch
 from allennlp.data import TextFieldTensors, Vocabulary
 from allennlp.models.model import Model
-from allennlp.modules import TextFieldEmbedder, FeedForward, Seq2VecEncoder, Seq2SeqEncoder, Highway
+from allennlp.modules import TextFieldEmbedder, Seq2VecEncoder, Seq2SeqEncoder, Highway
 from allennlp.nn.util import get_text_field_mask
 from allennlp.training.metrics.auc import Auc
 
@@ -18,7 +18,7 @@ class FraudClassifier(Model):
             num_highway_layers: int = 3,
             dropout: float = 0.1,
             seq_encoder: Optional[Seq2SeqEncoder] = None,
-            features_encoder: Optional[FeedForward] = None,
+            features_encoder: Optional[Seq2VecEncoder] = None,
     ) -> None:
         super().__init__(vocab)
         self._embedder = embedder
@@ -39,21 +39,22 @@ class FraudClassifier(Model):
     def forward(
             self,
             treatments: TextFieldTensors,
-            features: torch.Tensor,
+            types: TextFieldTensors,
+            features: TextFieldTensors,
             target: Optional[torch.Tensor] = None,
             **kwargs,
     ) -> Dict[str, torch.Tensor]:
         mask = get_text_field_mask(treatments)
         # shape: [batch_size, seq_length] -> [batch_size, seq_length, emb_dim]
-        embeddings = self._embedder(treatments)
+        embeddings = self._embedder(treatments) + self._embedder(types)
         if self._seq_encoder is not None:
             embeddings = self._seq_encoder(embeddings, mask)
 
         context_embeddings = self._encoder(embeddings, mask)
 
         if self._features_encoder is not None:
-            # shape: [batch_size, 5] -> [batch_size, 16]
-            feature_embeddings = self._features_encoder(features.float())
+            feature_embeddings = self._embedder(features)
+            feature_embeddings = self._features_encoder(feature_embeddings, mask=get_text_field_mask(features))
             context_embeddings = torch.cat((context_embeddings, feature_embeddings), dim=-1)
 
         context_embeddings = self._dropout(context_embeddings)

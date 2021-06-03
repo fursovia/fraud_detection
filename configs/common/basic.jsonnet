@@ -8,11 +8,9 @@ local LOADER = import 'loader.jsonnet';
   "model": {
     "type": "fraud_classifier",
     "features_encoder": {
-      "input_dim": 5,
-      "num_layers": 2,
-      "hidden_dims": [16, 32],
-      "activations": "sigmoid",
-      "dropout": 0.1
+      "type": "bag_of_embeddings",
+      "embedding_dim": 256,
+      "averaged": true,
     },
     "embedder": {
       "token_embedders": {
